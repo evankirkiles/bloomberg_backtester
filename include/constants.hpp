@@ -15,6 +15,11 @@ namespace bloomberg_session {
     extern const uint16_t PORT;
 }
 
+// Services available
+namespace bloomberg_services {
+    extern const char* REFDATA;
+}
+
 // Data retrieval names for accessing different elements
 namespace element_names {
     extern const char* SECURITY_DATA;

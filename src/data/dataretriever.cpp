@@ -12,13 +12,50 @@ namespace backtester {
 // @param type             The type of data which will be used for this data retriever.
 //                          -> HISTORICAL_DATA, INTRADAY_DATA, REALTIME_DATA
 //
-DataRetriever::DataRetriever(const std::string &p_type) {
+DataRetriever::DataRetriever(const std::string &p_type) : type(p_type) {
     // First initialize the session options with global session run settings.
     BloombergLP::blpapi::SessionOptions session_options;
     session_options.setServerHost(bloomberg_session::HOST);
     session_options.setServerPort(bloomberg_session::PORT);
-    // Also build the Event Handler to receive all incoming events
+    // Also build the Event Handler to receive all incoming events, depending on the type
+    if (type == "HISTORICAL_DATA") {
+        event_handler = std::make_unique<HistoricalDataHandler>();
+    } else {
+        // Other data handlers not implemented yet
+        std::cout << "Support for other data retrieval methods not implemented yet." << std::endl;
+    }
 
+    // Finally, initialize the Session connection to Bloomberg Communications
+    session = std::make_unique<BloombergLP::blpapi::Session>(session_options, event_handler);
+    // Open up the session in preparation for data requests
+    if (!session->start()) { std::cout << "Failed to start session." << std::endl; };
+}
+
+// Generates a request to Bloomberg for the data specified in the parameters. This function is only for
+// historical data retrievers, it should NOT be run on subscription-based or intraday retrievers.
+//
+// @param
+//
+BloombergLP::blpapi::Message DataRetriever::pullHistoricalData(const std::vector<std::string> &securities,
+                                                               const std::string &start_date,
+                                                               const std::string &end_date,
+                                                               const std::vector<std::string> &fields,
+                                                               const std::string &frequency) {
+
+    // Ensure that this instance of DataRetriever is able to take historical data
+    if (type != "HISTORICAL_DATA") { return nullptr; }
+
+    // First open the pipeline for getting historical data by using the Reference Data market service.
+    // Then proceed to build a request based on the given parameters.
+    BloombergLP::blpapi::Service histDataService = session->getService(bloomberg_services::REFDATA);
+    BloombergLP::blpapi::Request request = histDataService.createRequest("HistoricalDataRequest");
+    // Append the parameters to their respective fields in the request
+    for (const std::string& i : securities) { request.append("securities", i.c_str()); }
+    for (const std::string& i : fields) { request.append("fields", i.c_str()); }
+    request.set("startDate", start_date.c_str());
+    request.set("endDate", end_date.c_str());
+    request.set("periodicitySelection", frequency.c_str());
+    session->sendRequest(request);
 }
 
 // Constructor for the Data Handler, simply saving the object to fill as a local pointer member.

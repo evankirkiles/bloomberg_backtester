@@ -11,6 +11,11 @@ namespace bloomberg_session {
     const uint16_t PORT(8194);
 }
 
+// Services available through the Bloomberg APi
+namespace bloomberg_services {
+    const char* REFDATA("//blp/refdata");
+}
+
 // Definition of element-related constants for accessing Bloomberg data
 namespace element_names {
     const char* SECURITY_DATA("securityData");

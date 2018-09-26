@@ -28,18 +28,23 @@ public:
     // Constructor which initializes the session connection to Bloomberg API through which data will be requested.
     // The type parameter works to specify a type of data which will be handled by the instance of the DataRetriever.
     // Options currently include HISTORICAL_DATA, but will eventually support INTRADAY_DATA and REALTIME_DATA.
-    DataRetriever(const std::string& type);
+    explicit DataRetriever(const std::string& type);
 
     // Pulls data for the given stocks at the
     BloombergLP::blpapi::Message pullHistoricalData(
             const std::vector<std::string>& securities,
             const std::string& start_date,
             const std::string& end_Date,
-            const std::vector<std::string>& fields = {"PX_LAST"});
+            const std::vector<std::string>& fields = {"PX_LAST"},
+            const std::string& frequency = "DAILY");
 
 private:
+    // The type of Data Retriever (HISTORICAL_DATA, INTRADAY_DATA, or REALTIME_DATA
+    const std::string type;
     // The session across which member functions will pull data from Bloomberg. Is a unique pointer bc of RAII.
     std::unique_ptr<BloombergLP::blpapi::Session> session;
+    // The handler for the messages from Bloomberg servers.
+    std::unique_ptr<BloombergLP::blpapi::EventHandler> event_handler;
 };
 
 // Class which is the direct link between the program and the messages received by the Bloomberg API. Is passed
@@ -49,7 +54,7 @@ private:
 class HistoricalDataHandler : public BloombergLP::blpapi::EventHandler {
 public:
     // Default constructor
-    HistoricalDataHandler(std::unordered_map<std::string, SymbolHistoricalData>* target);
+    explicit HistoricalDataHandler(std::unordered_map<std::string, SymbolHistoricalData>* target);
     // The event handler logic function which receives data packets from Bloomberg API.
     bool processEvent(const BloombergLP::blpapi::Event &event, BloombergLP::blpapi::Session *session) override;
 
