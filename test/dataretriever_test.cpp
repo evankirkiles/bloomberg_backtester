@@ -35,3 +35,20 @@ TEST(DataRetrieverFixture, opens_session) { // NOLINT(cert-err58-cpp)
     }
 }
 
+// Tests the Data Retriever's data access capabilities
+TEST(DataRetrieverFixture, pulls_data) {
+    // Build a DataRetrieverFixture
+    backtester::DataRetriever dr("HISTORICAL_DATA");
+    std::unique_ptr<std::unordered_map<std::string, backtester::SymbolHistoricalData>> data = dr.pullHistoricalData(
+            {"IBM US EQUITY"},
+            BloombergLP::blpapi::Datetime(2005, 3, 3, 0, 0, 0, 0),
+            BloombergLP::blpapi::Datetime(2006, 3, 3, 0, 0, 0, 0));
+    int b = 0;
+    for (auto i : data->operator[]("IBM US EQUITY").data) {
+        b++;
+        std::cout << i.first << "    " << i.second.getElementAsString("PX_LAST") << std::endl;
+        if (b == 50) { break; }
+    }
+    EXPECT_NO_THROW();
+}
+

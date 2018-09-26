@@ -14,6 +14,7 @@ namespace bloomberg_session {
 // Services available through the Bloomberg APi
 namespace bloomberg_services {
     const char* REFDATA("//blp/refdata");
+    const char* MKTDATA("//blp/mktdata");
 }
 
 // Definition of element-related constants for accessing Bloomberg data

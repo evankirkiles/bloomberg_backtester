@@ -18,6 +18,7 @@ namespace bloomberg_session {
 // Services available
 namespace bloomberg_services {
     extern const char* REFDATA;
+    extern const char* MKTDATA;
 }
 
 // Data retrieval names for accessing different elements

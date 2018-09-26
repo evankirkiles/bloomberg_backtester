@@ -49,6 +49,7 @@ DataRetriever::pullHistoricalData(const std::vector<std::string> &securities,
 
     // First open the pipeline for getting historical data by using the Reference Data market service.
     // Then proceed to build a request based on the given parameters.
+    session->openService(bloomberg_services::REFDATA);
     BloombergLP::blpapi::Service histDataService = session->getService(bloomberg_services::REFDATA);
     BloombergLP::blpapi::Request request = histDataService.createRequest("HistoricalDataRequest");
     // Append the parameters to their respective fields in the request
