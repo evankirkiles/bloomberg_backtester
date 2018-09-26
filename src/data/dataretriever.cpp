@@ -22,7 +22,8 @@ DataRetriever::DataRetriever(const std::string &p_type) {
 }
 
 // Constructor for the Data Handler, simply saving the object to fill as a local pointer member.
-HistoricalDataHandler::HistoricalDataHandler(BloombergLP::blpapi::Element *p_target) : target(p_target) {}
+HistoricalDataHandler::HistoricalDataHandler(std::unordered_map<std::string, SymbolHistoricalData> *p_target) :
+        target(p_target) {}
 
 // Data processing done using the request responses sent from Bloomberg API. In this case, historical data
 // can be very large, so it may be split up into PARTIAL_RESPONSE objects instead of one RESPONSE. Either way,
@@ -40,10 +41,73 @@ bool HistoricalDataHandler::processEvent(const BloombergLP::blpapi::Event &event
         if ((event.eventType() != BloombergLP::blpapi::Event::PARTIAL_RESPONSE) &&
             (event.eventType() != BloombergLP::blpapi::Event::RESPONSE)) { continue; }
 
-        // Get the elements from the message
-        // Todo: figure out what is up with "SECURITY_DATA"
-        BloombergLP::blpapi::Element securityData = msg.getElement(SECURITY_DATA);
+        // Make sure did not run into any errors
+        if (!processExceptions(msg)) {
+            if (!processErrors(msg)) {
+                // Now process the fields and load them into the pointed to target object
+                BloombergLP::blpapi::Element security_data = msg.getElement(element_names::SECURITY_DATA);
+                // Build an empty SymbolHistoricalData for the symbol of the event
+                SymbolHistoricalData shd;
+                shd.symbol = security_data.getElementAsString(element_names::SECURITY_NAME);
+
+                // Now get the field data and put it into the target map
+                BloombergLP::blpapi::Element field_data = security_data.getElement(element_names::FIELD_DATA);
+                if (field_data.numValues() > 0) {
+                    for (int i = 0; i < field_data.numValues(); ++i) {
+                        // Get the element and its date and put them into the SymbolHistoricalData object
+                        BloombergLP::blpapi::Element element = field_data.getValueAsElement(static_cast<size_t>(i));
+                        BloombergLP::blpapi::Datetime date = element.getElementAsDatetime(element_names::DATE);
+
+                        // Put the information into the SymbolHistoricalData
+                        shd.data[date] = element;
+                    }
+                }
+
+                // Once all the data has been entered, append the SymbolHistoricalData to the target
+                target->operator[](shd.symbol) = shd;
+            } else {
+                // Log that an error occurred for the event
+                std::cout << "Error occurred! Cannot pull security data." << std::endl;
+            }
+        } else {
+            // Log that an exception occurred for the event
+            std::cout << "Exception occurred! Cannot pull security data." << std::endl;
+        }
     }
+}
+
+// Handles any exceptions in the message received from Bloomberg.
+bool HistoricalDataHandler::processExceptions(BloombergLP::blpapi::Message msg) {
+    BloombergLP::blpapi::Element security_data = msg.getElement(element_names::SECURITY_DATA);
+    BloombergLP::blpapi::Element field_exceptions = security_data.getElement(element_names::FIELD_EXCEPTIONS);
+
+    // Ensure there are no field exceptions
+    if (field_exceptions.numValues() > 0) {
+        BloombergLP::blpapi::Element element = field_exceptions.getValueAsElement(0);
+        BloombergLP::blpapi::Element field_id = element.getElement(element_names::FIELD_ID);
+        BloombergLP::blpapi::Element error_info = element.getElement(element_names::ERROR_INFO);
+        BloombergLP::blpapi::Element error_message = error_info.getElement(element_names::ERROR_MESSAGE);
+        // Log the exceptions found to the console and return true for errors found
+        std::cout << field_id << std::endl;
+        std::cout << error_message << std::endl;
+        return true;
+    }
+    return false;
+}
+
+// Handles any errors in the data received from Bloomberg.
+bool HistoricalDataHandler::processErrors(BloombergLP::blpapi::Message msg) {
+    BloombergLP::blpapi::Element security_data = msg.getElement(element_names::SECURITY_DATA);
+
+    // If a security error occurred, notify the user
+    if (security_data.hasElement(element_names::SECURITY_ERROR)) {
+        BloombergLP::blpapi::Element security_error = security_data.getElement(element_names::SECURITY_ERROR);
+        BloombergLP::blpapi::Element error_message = security_error.getElement(element_names::ERROR_MESSAGE);
+        // Log the errors found to the console and return true for errors found
+        std::cout << error_message << std::endl;
+        return true;
+    }
+    return false;
 }
 
 }

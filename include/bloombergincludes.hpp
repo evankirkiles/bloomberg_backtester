@@ -21,5 +21,9 @@
 #include <iostream>
 #include <string>
 #include <memory>
+// Standard library includes
+#include <vector>
+#include <map>
+#include <unordered_map>
 
 #endif //BACKTESTER_BLOOMBERGINCLUDES_HPP

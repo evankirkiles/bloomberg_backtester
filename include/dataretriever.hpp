@@ -4,8 +4,6 @@
 
 #ifndef BACKTESTER_DATARETRIEVER_HPP
 #define BACKTESTER_DATARETRIEVER_HPP
-// Standard library includes
-#include <vector>
 // Bloomberg API includes
 #include "bloombergincludes.hpp"
 // Project constant includes
@@ -13,6 +11,13 @@
 
 // Global namespace
 namespace backtester {
+
+// The single-symbol type which is returned from a history call. It contains a single security with dates and
+// various fields in an ordered map of unsigned longs and Elements holding all the data for the day.
+struct SymbolHistoricalData {
+    std::string symbol;
+    std::map<BloombergLP::blpapi::Datetime, BloombergLP::blpapi::Element> data;
+};
 
 // Class that contains the methods for data retrieval from Bloomberg API. In the future it will be
 // modified to support subscriptions, but at the moment is only needed for backtesting and thus
@@ -44,13 +49,16 @@ private:
 class HistoricalDataHandler : public BloombergLP::blpapi::EventHandler {
 public:
     // Default constructor
-    HistoricalDataHandler(BloombergLP::blpapi::Element* target);
+    HistoricalDataHandler(std::unordered_map<std::string, SymbolHistoricalData>* target);
     // The event handler logic function which receives data packets from Bloomberg API.
     bool processEvent(const BloombergLP::blpapi::Event &event, BloombergLP::blpapi::Session *session) override;
 
+    // Makes sure the message is valid before parsing the fields from it
+    bool processExceptions(BloombergLP::blpapi::Message msg);
+    bool processErrors(BloombergLP::blpapi::Message msg);
 private:
     // A pointer to the object into which historical data is filled.
-    BloombergLP::blpapi::Element *target;
+    std::unordered_map<std::string, SymbolHistoricalData> *target;
 };
 
 }
