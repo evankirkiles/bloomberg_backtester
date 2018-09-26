@@ -27,6 +27,6 @@
 #include <unordered_map>
 
 // Google test include for friend classes
-#include <lib/googletest/include/gtest/gtest_prod.h>
+#include <../test/lib/googletest/include/gtest/gtest_prod.h>
 
 #endif //BACKTESTER_BLOOMBERGINCLUDES_HPP

@@ -12,7 +12,8 @@ include_directories("C:\\blp\\C++\\include")
 # Also include project level directories0000
 include_directories(../src ../include)
 # Also, because using Google Test, include its local includes
-include_directories(../lib/googletest/include ../lib/googletest)
+include_directories(lib/googletest/include lib/googletest)
+add_subdirectory(lib/googletest)
 
 # Initialize project sources here
 set(BACKTEST_TESTS
@@ -23,8 +24,9 @@ add_executable(BacktesterTests
         ${BACKTEST_TESTS})
 
 # Link the executable to the Bloomberg libraries
-file(GLOB BLPAPI_LIBRARIES
+target_link_libraries(BacktesterTests backtesterlibs)
+file(GLOB BLPAPI_LIBRARIEST
         "C:/blp/C++/lib/*.lib")
-target_link_libraries(BacktesterTests ${BLPAPI_LIBRARIES})
+target_link_libraries(BacktesterTests ${BLPAPI_LIBRARIEST})
 # Link the executable to Google Test
 target_link_libraries(BacktesterTests gtest gtest_main)

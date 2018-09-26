@@ -68,9 +68,7 @@ DataRetriever::pullHistoricalData(const std::vector<std::string> &securities,
         // Check if the getting the next event is possible. If it is, pull it through the handler. If not,
         // continue running loop.
         BloombergLP::blpapi::Event event;
-        if (queue.tryNextEvent(&event) == 0) {
-            responseFinished = handler.processResponseEvent(event);
-        }
+        if (queue.tryNextEvent(&event) == 0) { responseFinished = handler.processResponseEvent(event); }
     }
     // When event finishes, return the handler's data map pointer
     return std::move(handler.target);

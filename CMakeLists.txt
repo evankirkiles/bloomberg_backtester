@@ -11,16 +11,25 @@ set(CMAKE_INCLUDE_CURRENT_DIR YES)
 include_directories("C:\\blp\\C++\\include")
 # Also include project level directories0000
 include_directories(src include test)
+add_subdirectory(include)
 add_subdirectory(test)
 
 # Initialize project sources here
+set(BACKTEST_HEADERS
+        include/bloombergincludes.hpp
+        include/constants.hpp
+        include/dataretriever.hpp)
 set(BACKTEST_SRCS
-        src/data/dataretriever.cpp)
+        src/data/dataretriever.cpp
+        src/constants.cpp)
+add_library(backtesterlibs ${BACKTEST_HEADERS} ${BACKTEST_SRCS})
 
 # Build the backtester executable
 add_executable(Backtester
         main.cpp
         ${BACKTEST_SRCS})
+
+target_link_libraries(backtester_libs)
 
 # Link the executable to the Bloomberg libraries
 file(GLOB BLPAPI_LIBRARIES
