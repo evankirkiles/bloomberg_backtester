@@ -14,7 +14,7 @@ include_directories(src include)
 
 # Initialize project sources here
 set(BACKTEST_SRCS
-        src/dataretriever.cpp)
+        src/data/dataretriever.cpp)
 
 # Build the backtester executable
 add_executable(Backtester

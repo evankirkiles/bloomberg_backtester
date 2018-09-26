@@ -20,5 +20,6 @@
 // Also provide an include to common libraries
 #include <iostream>
 #include <string>
+#include <memory>
 
 #endif //BACKTESTER_BLOOMBERGINCLUDES_HPP
