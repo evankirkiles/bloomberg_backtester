@@ -1,3 +1,4 @@
 # Ignore the .idea and cmake-build-debug directories
 .idea/
 cmake-build-debug/
+lib/googletest/

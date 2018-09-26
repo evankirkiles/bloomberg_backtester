@@ -30,11 +30,14 @@ public:
     // Options currently include HISTORICAL_DATA, but will eventually support INTRADAY_DATA and REALTIME_DATA.
     explicit DataRetriever(const std::string& type);
 
+    // On destruction, close the session before releasing the object
+    ~DataRetriever();
+
     // Pulls data for the given stocks at the
-    BloombergLP::blpapi::Message pullHistoricalData(
+    std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> pullHistoricalData(
             const std::vector<std::string>& securities,
-            const std::string& start_date,
-            const std::string& end_Date,
+            const BloombergLP::blpapi::Datetime& start_date,
+            const BloombergLP::blpapi::Datetime& end_Date,
             const std::vector<std::string>& fields = {"PX_LAST"},
             const std::string& frequency = "DAILY");
 
@@ -43,27 +46,28 @@ private:
     const std::string type;
     // The session across which member functions will pull data from Bloomberg. Is a unique pointer bc of RAII.
     std::unique_ptr<BloombergLP::blpapi::Session> session;
-    // The handler for the messages from Bloomberg servers.
-    std::unique_ptr<BloombergLP::blpapi::EventHandler> event_handler;
+
+    // Allow Google Test access as a friend class to private members
+    FRIEND_TEST(DataRetrieverFixture, opens_session);
 };
 
 // Class which is the direct link between the program and the messages received by the Bloomberg API. Is passed
 // in to the session instance so all messages being sent by the session are interpreted by this class. Inherits
 // from the base Bloomberg Event Handler class. This version of the data handler is specific for historical data
 // and thus should only be used with DataRetrievers of type HISTORICAL_DATA.
-class HistoricalDataHandler : public BloombergLP::blpapi::EventHandler {
-public:
+struct HistoricalDataHandler {
     // Default constructor
-    explicit HistoricalDataHandler(std::unordered_map<std::string, SymbolHistoricalData>* target);
-    // The event handler logic function which receives data packets from Bloomberg API.
-    bool processEvent(const BloombergLP::blpapi::Event &event, BloombergLP::blpapi::Session *session) override;
+    HistoricalDataHandler() = default;
+    // The event handler logic function which receives data packets from Bloomberg API. Returns false until
+    // the event passed in is a Response object, at which point the data is done streaming.
+    bool processResponseEvent(const BloombergLP::blpapi::Event &event);
 
     // Makes sure the message is valid before parsing the fields from it
     bool processExceptions(BloombergLP::blpapi::Message msg);
     bool processErrors(BloombergLP::blpapi::Message msg);
-private:
+
     // A pointer to the object into which historical data is filled.
-    std::unordered_map<std::string, SymbolHistoricalData> *target;
+    std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> target;
 };
 
 }

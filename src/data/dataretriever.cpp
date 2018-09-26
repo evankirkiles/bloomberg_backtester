@@ -17,28 +17,30 @@ DataRetriever::DataRetriever(const std::string &p_type) : type(p_type) {
     BloombergLP::blpapi::SessionOptions session_options;
     session_options.setServerHost(bloomberg_session::HOST);
     session_options.setServerPort(bloomberg_session::PORT);
-    // Also build the Event Handler to receive all incoming events, depending on the type
-    if (type == "HISTORICAL_DATA") {
-        event_handler = std::make_unique<HistoricalDataHandler>();
-    } else {
-        // Other data handlers not implemented yet
-        std::cout << "Support for other data retrieval methods not implemented yet." << std::endl;
-    }
-
-    // Finally, initialize the Session connection to Bloomberg Communications
-    session = std::make_unique<BloombergLP::blpapi::Session>(session_options, event_handler);
+    // Also initialize the Session connection to Bloomberg Communications
+    session = std::make_unique<BloombergLP::blpapi::Session>(session_options);
     // Open up the session in preparation for data requests
-    if (!session->start()) { std::cout << "Failed to start session." << std::endl; };
+    if (!session->start()) {
+        throw std::runtime_error("Failed to start session! Aborting.");
+    };
 }
+
+// Destructor which simply closes the connection to the Bloomberg API
+DataRetriever::~DataRetriever() { session->stop(); }
 
 // Generates a request to Bloomberg for the data specified in the parameters. This function is only for
 // historical data retrievers, it should NOT be run on subscription-based or intraday retrievers.
 //
-// @param
+// @param securities       A vector of the securities to request data from, ex. "IBM US EQUITY"
+// @param start_date       The date from which to begin pulling data.
+// @param end_date         The upper limit on pulled dates.
+// @param fields           The fields of data desired, ex. "PX_LAST", "OPEN"
+// @param frequency        The frequency of the data, ex. "DAILY", "MONTHLY"
 //
-BloombergLP::blpapi::Message DataRetriever::pullHistoricalData(const std::vector<std::string> &securities,
-                                                               const std::string &start_date,
-                                                               const std::string &end_date,
+std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>>
+DataRetriever::pullHistoricalData(const std::vector<std::string> &securities,
+                                                               const BloombergLP::blpapi::Datetime& start_date,
+                                                               const BloombergLP::blpapi::Datetime& end_date,
                                                                const std::vector<std::string> &fields,
                                                                const std::string &frequency) {
 
@@ -52,22 +54,33 @@ BloombergLP::blpapi::Message DataRetriever::pullHistoricalData(const std::vector
     // Append the parameters to their respective fields in the request
     for (const std::string& i : securities) { request.append("securities", i.c_str()); }
     for (const std::string& i : fields) { request.append("fields", i.c_str()); }
-    request.set("startDate", start_date.c_str());
-    request.set("endDate", end_date.c_str());
+    request.set("startDate", start_date);
+    request.set("endDate", end_date);
     request.set("periodicitySelection", frequency.c_str());
-    session->sendRequest(request);
-}
 
-// Constructor for the Data Handler, simply saving the object to fill as a local pointer member.
-HistoricalDataHandler::HistoricalDataHandler(std::unordered_map<std::string, SymbolHistoricalData> *p_target) :
-        target(p_target) {}
+    // Build an Event queue onto which to receive the data which will be handled
+    BloombergLP::blpapi::EventQueue queue;
+    session->sendRequest(request, BloombergLP::blpapi::CorrelationId(1), &queue);
+    // Handle events as they come in to the queue
+    HistoricalDataHandler handler;
+    bool responseFinished = false;
+    while(!responseFinished) {
+        // Check if the getting the next event is possible. If it is, pull it through the handler. If not,
+        // continue running loop.
+        BloombergLP::blpapi::Event event;
+        if (queue.tryNextEvent(&event) == 0) {
+            responseFinished = handler.processResponseEvent(event);
+        }
+    }
+    // When event finishes, return the handler's data map pointer
+    return std::move(handler.target);
+}
 
 // Data processing done using the request responses sent from Bloomberg API. In this case, historical data
 // can be very large, so it may be split up into PARTIAL_RESPONSE objects instead of one RESPONSE. Either way,
 // the data is interpreted and then returned as an Element object which contains the historical data requested.
-// In case of an error, the object will not be filled.
-bool HistoricalDataHandler::processEvent(const BloombergLP::blpapi::Event &event,
-                                         BloombergLP::blpapi::Session *session) {
+// In case of an error, the object will not be filled. This function returns false
+bool HistoricalDataHandler::processResponseEvent(const BloombergLP::blpapi::Event &event) {
 
     // Iterates through the messages returned by the event
     BloombergLP::blpapi::MessageIterator msgIter(event);
@@ -111,6 +124,10 @@ bool HistoricalDataHandler::processEvent(const BloombergLP::blpapi::Event &event
             std::cout << "Exception occurred! Cannot pull security data." << std::endl;
         }
     }
+
+    // If the event processed was of type RESPONSE, then it was the last one and thus it is no longer
+    // necessary to check for responses
+    return event.eventType() == BloombergLP::blpapi::Event::RESPONSE;
 }
 
 // Handles any exceptions in the message received from Bloomberg.
