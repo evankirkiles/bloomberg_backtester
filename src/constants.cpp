@@ -33,4 +33,9 @@ namespace element_names {
     const char* ERROR_MESSAGE("message");
     const char* FIELD_EXCEPTIONS("fieldExceptions");
     const char* ERROR_INFO("errorInfo");
+    const char* RESPONSE_ERROR("responseError");
+    const char* CATEGORY("category");
+    const char* SUBCATEGORY("subcategory");
+    const char* MESSAGE("message");
+    const char* CODE("code");
 }

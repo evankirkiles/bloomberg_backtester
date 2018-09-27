@@ -3,7 +3,10 @@
 //
 
 #ifndef BACKTESTER_DATARETRIEVER_HPP
-#define BACKTESTER_DATARETRIEVER_HPP
+#define BACKTESTER_DATARETRIEVER_HPP\
+// Include stringstream for inline date formatter
+#include <sstream>
+#include <iomanip>
 // Bloomberg API includes
 #include "bloombergincludes.hpp"
 // Project constant includes
@@ -12,11 +15,24 @@
 // Global namespace
 namespace backtester {
 
+// Inline function to parse the Bloomberg Historical Data formatted date from a normal Datetime.
+inline std::string get_date_formatted(const BloombergLP::blpapi::Datetime& date) {
+    std::stringstream str;
+    str << date.year() << std::setw(2) << std::setfill('0') << date.month() << std::setw(2) << std::setfill('0') << date.day();
+    return str.str();
+}
+
 // The single-symbol type which is returned from a history call. It contains a single security with dates and
 // various fields in an ordered map of unsigned longs and Elements holding all the data for the day.
 struct SymbolHistoricalData {
     std::string symbol;
-    std::map<BloombergLP::blpapi::Datetime, BloombergLP::blpapi::Element> data;
+    std::map<BloombergLP::blpapi::Datetime, std::unordered_map<std::string, double>> data;
+
+    // Function to append historical datas together from the same symbol
+    void append(const SymbolHistoricalData& other) {
+        // Ensure the data is for the same symbol
+        if (other.symbol != symbol) { return; }
+        data.insert(other.data.begin(), other.data.end()); }
 };
 
 // Class that contains the methods for data retrieval from Bloomberg API. In the future it will be
@@ -56,14 +72,14 @@ private:
 // from the base Bloomberg Event Handler class. This version of the data handler is specific for historical data
 // and thus should only be used with DataRetrievers of type HISTORICAL_DATA.
 struct HistoricalDataHandler {
-    // Default constructor
-    HistoricalDataHandler() = default;
+    // Constructor initializes the unique ptr to empty unordered map
+    HistoricalDataHandler();
     // The event handler logic function which receives data packets from Bloomberg API. Returns false until
     // the event passed in is a Response object, at which point the data is done streaming.
     bool processResponseEvent(const BloombergLP::blpapi::Event &event);
 
     // Makes sure the message is valid before parsing the fields from it
-    bool processExceptions(BloombergLP::blpapi::Message msg);
+    bool processExceptionsAndErrors(BloombergLP::blpapi::Message msg);
     bool processErrors(BloombergLP::blpapi::Message msg);
 
     // A pointer to the object into which historical data is filled.

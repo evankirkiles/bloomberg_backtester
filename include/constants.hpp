@@ -36,6 +36,11 @@ namespace element_names {
     extern const char* ERROR_MESSAGE;
     extern const char* FIELD_EXCEPTIONS;
     extern const char* ERROR_INFO;
+    extern const char* RESPONSE_ERROR;
+    extern const char* CATEGORY;
+    extern const char* SUBCATEGORY;
+    extern const char* MESSAGE;
+    extern const char* CODE;
 }
 
 #endif //BACKTESTER_CONSTANTS_HPP
