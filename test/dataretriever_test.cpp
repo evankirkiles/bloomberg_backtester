@@ -36,20 +36,24 @@ TEST(DataRetrieverFixture, opens_session) { // NOLINT(cert-err58-cpp)
 }
 
 // Tests the Data Retriever's data access capabilities
-TEST(DataRetrieverFixture, pulls_data) {
+TEST(DataRetrieverFixture, pulls_data) { // NOLINT(cert-err58-cpp)
     // Build a DataRetrieverFixture
     backtester::DataRetriever dr("HISTORICAL_DATA");
     std::unique_ptr<std::unordered_map<std::string, backtester::SymbolHistoricalData>> data = dr.pullHistoricalData(
             {"IBM US EQUITY"},
             BloombergLP::blpapi::Datetime(2005, 3, 3, 0, 0, 0, 0),
             BloombergLP::blpapi::Datetime(2006, 3, 3, 0, 0, 0, 0));
-    auto i = data->operator[]("IBM US EQUITY").data.begin();
-    std::cout << i->second["PX_LAST"] << std::endl;
-    EXPECT_NO_THROW();
+    // Uncomment this code to print out the data retrieved
+//    auto i = data->operator[]("IBM US EQUITY").data.begin();
+//    while (i != data->operator[]("IBM US EQUITY").data.end()) {
+//        std::cout << "DATE: " << i->first << ", PX_LAST: " << i->second["PX_LAST"] << std::endl;
+//        ++i;
+//    }
+    EXPECT_EQ(92.41, data->operator[]("IBM US EQUITY").data.begin()->second["PX_LAST"]);
 }
 
 // Tests the inline function's data formatting
-TEST(DataRetrieverFixture, date_format) {
+TEST(DataRetrieverFixture, date_format) { // NOLINT(cert-err58-cpp)
     // Format a date
     BloombergLP::blpapi::Datetime date(2005, 3, 3, 0, 0, 0, 0);
     EXPECT_EQ("20050303", backtester::get_date_formatted(date));

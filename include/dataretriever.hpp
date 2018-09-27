@@ -62,9 +62,6 @@ private:
     const std::string type;
     // The session across which member functions will pull data from Bloomberg. Is a unique pointer bc of RAII.
     std::unique_ptr<BloombergLP::blpapi::Session> session;
-
-    // Allow Google Test access as a friend class to private members
-    FRIEND_TEST(DataRetrieverFixture, opens_session);
 };
 
 // Class which is the direct link between the program and the messages received by the Bloomberg API. Is passed

@@ -29,7 +29,7 @@ DataRetriever::DataRetriever(const std::string &p_type) : type(p_type) {
 DataRetriever::~DataRetriever() { session->stop(); }
 
 // Generates a request to Bloomberg for the data specified in the parameters. This function is only for
-// historical data retrievers, it should NOT be run on subscription-based or intraday retrievers.
+// historical data retrievers, it should NOT be run on subscription-based or intra-day retrievers.
 //
 // @param securities       A vector of the securities to request data from, ex. "IBM US EQUITY"
 // @param start_date       The date from which to begin pulling data.
@@ -131,7 +131,6 @@ bool HistoricalDataHandler::processResponseEvent(const BloombergLP::blpapi::Even
         }
     }
 
-    std::cout << "Size: " << target->operator[]("IBM US EQUITY").data.size() << std::endl;
     // If the event processed was of type RESPONSE, then it was the last one and thus it is no longer
     // necessary to check for responses
     return event.eventType() == BloombergLP::blpapi::Event::RESPONSE;
