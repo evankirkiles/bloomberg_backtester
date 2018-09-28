@@ -14,15 +14,13 @@ include_directories(src include test)
 add_subdirectory(include)
 add_subdirectory(test)
 
-# Initialize project sources here
-set(BACKTEST_HEADERS
-        include/bloombergincludes.hpp
-        include/constants.hpp
-        include/dataretriever.hpp)
+# Initialize project sources here\
 set(BACKTEST_SRCS
         src/data/dataretriever.cpp
-        src/constants.cpp)
-add_library(backtesterlibs ${BACKTEST_HEADERS} ${BACKTEST_SRCS})
+        src/data/data.cpp
+        src/constants.cpp
+        src/infrastructure/events.cpp
+        src/strategy/strategy.cpp)
 
 # Build the backtester executable
 add_executable(Backtester

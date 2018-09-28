@@ -24,7 +24,7 @@ add_executable(BacktesterTests
         ${BACKTEST_TESTS})
 
 # Link the executable to the Bloomberg libraries
-target_link_libraries(BacktesterTests backtesterlibs)
+target_link_libraries(BacktesterTests backtester_libs)
 file(GLOB BLPAPI_LIBRARIEST
         "C:/blp/C++/lib/*.lib")
 target_link_libraries(BacktesterTests ${BLPAPI_LIBRARIEST})

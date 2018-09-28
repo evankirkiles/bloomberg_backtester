@@ -31,7 +31,7 @@ struct SymbolHistoricalData {
     // Function to append historical datas together from the same symbol
     void append(const SymbolHistoricalData& other) {
         // Ensure the data is for the same symbol
-        if (other.symbol != symbol) { return; }
+        if (other.symbol != symbol) { throw std::runtime_error("Cannot append two SymbolHistoricalData's of different symbols!"); }
         data.insert(other.data.begin(), other.data.end()); }
 };
 
