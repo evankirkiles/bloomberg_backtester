@@ -25,6 +25,7 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <list>
 
 // Google test include for friend classes
 #include <../test/lib/googletest/include/gtest/gtest_prod.h>
