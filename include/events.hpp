@@ -1,3 +1,5 @@
+#include <utility>
+
 //
 // Created by Evan Kirkiles on 9/27/2018.
 //
@@ -30,6 +32,11 @@ struct Event {
 
     // Default destructor to allow for polymorphism (so we can downcast sub event types from pointers to Events)
     virtual ~Event() = default;
+
+    // For some reason error pops up when using Event object members, so need protected constructor
+protected:
+    Event(std::string p_type, const BloombergLP::blpapi::Datetime& p_datetime) :
+            type(std::move(p_type)), datetime(p_datetime) {};
 };
 
 // Scheduled Event that is placed onto the stack depending on when the algorithm has scheduled it to run. This
@@ -89,6 +96,9 @@ struct SignalEvent : public Event {
 struct OrderEvent : public Event {
     const std::string symbol;
     int quantity;
+
+    // Constructor for the OrderEvent
+    OrderEvent(const std::string& symbol, int quantity, const BloombergLP::blpapi::Datetime& when);
 };
 
 // FillEvent which is produced upon a successful OrderEvent. All slippage and risk management will have been handled
