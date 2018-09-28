@@ -26,7 +26,7 @@ namespace events {
 //
 struct Event {
     const std::string type;
-    const unsigned long datetime = 0;
+    const BloombergLP::blpapi::Datetime datetime = BloombergLP::blpapi::Datetime(1970, 1, 1, 0, 0, 0);
 
     // Default destructor to allow for polymorphism (so we can downcast sub event types from pointers to Events)
     virtual ~Event() = default;
