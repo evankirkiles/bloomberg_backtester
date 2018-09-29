@@ -14,9 +14,16 @@ HistoricalDataManager::HistoricalDataManager() : dr("HISTORICAL") {}
 // by first pulling the EOD price data for the securities to be traded by the algorithm and then generating Market
 // Events for each date. Goes through each symbol's data one entry at a time at the same time, comparing in case of
 // dates not lining up and then catching up the iterators.
-void fillHistory(std::list<std::unique_ptr<events::Event>>* map) {
-    // First retrieve the array of market
+void HistoricalDataManager::fillHistory(const std::vector<std::string> &symbols,
+                                        const BloombergLP::blpapi::Datetime& start,
+                                        const BloombergLP::blpapi::Datetime& end,
+                                        std::list<std::unique_ptr<events::Event>>* location) {
 
+    // First retrieve the array of daily end of date prices
+    std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> data =
+            dr.pullHistoricalData(symbols, start, end);
+
+    // Now iterate through the arr
 }
 
 }
