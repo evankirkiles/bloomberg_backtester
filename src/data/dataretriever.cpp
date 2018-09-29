@@ -85,14 +85,15 @@ HistoricalDataHandler::HistoricalDataHandler() :
 // In case of an error, the object will not be filled. This function returns false
 bool HistoricalDataHandler::processResponseEvent(const BloombergLP::blpapi::Event &event) {
 
+    // Make sure the message is either a partial response or a full response
+    if ((event.eventType() != BloombergLP::blpapi::Event::PARTIAL_RESPONSE) &&
+        (event.eventType() != BloombergLP::blpapi::Event::RESPONSE)) { return false; }
+
     // Iterates through the messages returned by the event
     BloombergLP::blpapi::MessageIterator msgIter(event);
     while (msgIter.next()) {
         // Get the message object
         BloombergLP::blpapi::Message msg = msgIter.message();
-        // Make sure the message is either a partial response or a full response
-        if ((event.eventType() != BloombergLP::blpapi::Event::PARTIAL_RESPONSE) &&
-            (event.eventType() != BloombergLP::blpapi::Event::RESPONSE)) { continue; }
 
         // Make sure did not run into any errors
         if (!processExceptionsAndErrors(msg)) {
@@ -139,7 +140,23 @@ bool HistoricalDataHandler::processResponseEvent(const BloombergLP::blpapi::Even
 // Handles any exceptions in the message received from Bloomberg.
 bool HistoricalDataHandler::processExceptionsAndErrors(BloombergLP::blpapi::Message msg) {
     // If there is no security data, return a call to processErrors
-    if (!msg.hasElement(element_names::SECURITY_DATA)) { return processErrors(msg); }
+    if (!msg.hasElement(element_names::SECURITY_DATA)) {
+        if (msg.hasElement(element_names::RESPONSE_ERROR)) {
+            // Get the response error element as it contains the error code
+            BloombergLP::blpapi::Element response_data = msg.getElement(element_names::RESPONSE_ERROR);
+
+            // Log the error message, code, and category/subcategory
+            BloombergLP::blpapi::Element error_category = response_data.getElement(element_names::CATEGORY);
+            BloombergLP::blpapi::Element error_message = response_data.getElement(element_names::MESSAGE);
+            BloombergLP::blpapi::Element error_code = response_data.getElement(element_names::CODE);
+            BloombergLP::blpapi::Element error_subcategory = response_data.getElement(element_names::SUBCATEGORY);
+            std::cout << "Error pulling data: \"" << error_message.getValueAsString() << "\" with code " <<
+                      error_code.getValueAsInt32() << " and category " << error_category.getValueAsString() << "::" <<
+                      error_subcategory.getValueAsString() << std::endl;
+
+        }
+        return true;
+    }
 
     BloombergLP::blpapi::Element security_data = msg.getElement(element_names::SECURITY_DATA);
     BloombergLP::blpapi::Element field_exceptions = security_data.getElement(element_names::FIELD_EXCEPTIONS);
@@ -155,39 +172,6 @@ bool HistoricalDataHandler::processExceptionsAndErrors(BloombergLP::blpapi::Mess
         std::cout << error_message << std::endl;
         return true;
     }
-    return false;
-}
-
-// Handles any errors in the data received from Bloomberg.
-bool HistoricalDataHandler::processErrors(BloombergLP::blpapi::Message msg) {
-    if (!msg.hasElement(element_names::SECURITY_ERROR)) {
-        // Get the response error element as it contains the error code
-        BloombergLP::blpapi::Element response_data = msg.getElement(element_names::RESPONSE_ERROR);
-
-        // Log the error message, code, and category/subcategory
-        BloombergLP::blpapi::Element error_category = response_data.getElement(element_names::CATEGORY);
-        BloombergLP::blpapi::Element error_message = response_data.getElement(element_names::MESSAGE);
-        BloombergLP::blpapi::Element error_code = response_data.getElement(element_names::CODE);
-        BloombergLP::blpapi::Element error_subcategory = response_data.getElement(element_names::SUBCATEGORY);
-        std::cout << "Error pulling data: \"" << error_message.getValueAsString() << "\" with code " <<
-            error_code.getValueAsInt32() << " and category " << error_category.getValueAsString() << "::" <<
-            error_subcategory.getValueAsString() << std::endl;
-
-        return true;
-    } else {
-        // Get the security data as it will contain the error
-        BloombergLP::blpapi::Element security_data = msg.getElement(element_names::SECURITY_DATA);
-
-        // If a security error occurred, notify the user
-        if (security_data.hasElement(element_names::SECURITY_ERROR)) {
-            BloombergLP::blpapi::Element security_error = security_data.getElement(element_names::SECURITY_ERROR);
-            BloombergLP::blpapi::Element error_message = security_error.getElement(element_names::ERROR_MESSAGE);
-            // Log the errors found to the console and return true for errors found
-            std::cout << error_message << std::endl;
-            return true;
-        }
-    }
-
     return false;
 }
 
