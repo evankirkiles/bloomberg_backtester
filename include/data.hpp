@@ -12,7 +12,8 @@ public:
     // Constructor builds the data manager with a data retriever connected to the Bloomberg API.
     explicit HistoricalDataManager();
 
-    // Function that builds the Market Events and puts them onto the HEAP event list
+    // Function that builds the Market Events and puts them onto the HEAP event list in increasing order of
+    // dates.
 
 };
 

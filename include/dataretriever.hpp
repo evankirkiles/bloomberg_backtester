@@ -77,7 +77,6 @@ struct HistoricalDataHandler {
 
     // Makes sure the message is valid before parsing the fields from it
     bool processExceptionsAndErrors(BloombergLP::blpapi::Message msg);
-    bool processErrors(BloombergLP::blpapi::Message msg);
 
     // A pointer to the object into which historical data is filled.
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> target;
