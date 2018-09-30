@@ -30,6 +30,8 @@ struct Event {
     const std::string type;
     const BloombergLP::blpapi::Datetime datetime = BloombergLP::blpapi::Datetime(1970, 1, 1, 0, 0, 0);
 
+    // Print function to be implemented by the events themselves for debugging purposes
+    virtual void what() = 0;
     // Default destructor to allow for polymorphism (so we can downcast sub event types from pointers to Events)
     virtual ~Event() = default;
 
@@ -50,6 +52,9 @@ struct ScheduledEvent : public Event {
     void (*function);
     Strategy &instance;
 
+    // Print function
+    void what();
+
     // Constructor for the ScheduledEvent
     ScheduledEvent(void (*function), Strategy &strat, const BloombergLP::blpapi::Datetime &when);
 };
@@ -64,6 +69,9 @@ struct ScheduledEvent : public Event {
 struct MarketEvent : public Event {
     const std::vector<std::string> symbols;
     const std::unordered_map<std::string, double> data;
+
+    // Print function
+    void what();
 
     // Constructor for the MarketEvent
     MarketEvent(const std::vector<std::string> &symbols, const std::unordered_map<std::string, double> &data,
@@ -81,8 +89,11 @@ struct SignalEvent : public Event {
     const std::string symbol;
     const double percentage;
 
+    // Print function
+    void what();
+
     // Constructor for the SignalEvent
-    SignalEvent(const std::string &symbol, double percentage, const BloombergLP::blpapi::Datetime &when);
+    SignalEvent(const std::string &symbol, double percentage, const BloombergLP::blpapi::Datetime& when);
 };
 
 // OrderEvent which is produced when a signal from teh algorithm is received by the execution handler. It may be
@@ -97,8 +108,11 @@ struct OrderEvent : public Event {
     const std::string symbol;
     int quantity;
 
+    // Print function
+    void what();
+
     // Constructor for the OrderEvent
-    OrderEvent(const std::string& symbol, int quantity, const BloombergLP::blpapi::Datetime& when);
+    OrderEvent(const std::string& symbol, int quantity);
 };
 
 // FillEvent which is produced upon a successful OrderEvent. All slippage and risk management will have been handled
@@ -115,9 +129,11 @@ struct FillEvent : public Event {
     const int quantity;
     const double cost, slippage, commission;
 
+    // Print function
+    void what();
+
     // Constructor for the FillEvent
-    FillEvent(const std::string &symbol, int quantity, double cost, double slippage, double commission,
-              const BloombergLP::blpapi::Datetime &when);
+    FillEvent(const std::string &symbol, int quantity, double cost, double slippage, double commission);
 };
 
 }

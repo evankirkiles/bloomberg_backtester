@@ -113,6 +113,8 @@ bool HistoricalDataHandler::processResponseEvent(const BloombergLP::blpapi::Even
 
                         // Put the information into the SymbolHistoricalData
                         for (int j = 1; j < element.numElements(); ++j) {
+                            // I haven't seen any documentation for missing values, which could potentially throw
+                            // a stick in the wheels of the backtester. If I run into them, I will update the code here.
                             BloombergLP::blpapi::Element e = element.getElement(static_cast<size_t>(j));
                             shd.data[date][e.name().string()] = e.getValueAsFloat64();
                         }
