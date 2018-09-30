@@ -27,7 +27,7 @@ public:
             const std::vector<std::string>& symbols,
             const std::vector<std::string>& fields,
             unsigned int timeunitsback,
-            const std::string& frequency) = 0;
+            const std::string& frequency="DAILY") = 0;
 protected:
     // A reference to the 'current time' simulated by the backtester
     BloombergLP::blpapi::Datetime* currentTime{};
@@ -53,7 +53,7 @@ public:
             const std::vector<std::string>& symbols,
             const std::vector<std::string>& fields,
             unsigned int timeunitsback,
-            const std::string& frequency);
+            const std::string& frequency) override;
 private:
     // The Data Retriever module itself used by the history and buildHistory functions to query Bloomberg API
     DataRetriever dr;

@@ -17,7 +17,8 @@ add_subdirectory(lib/googletest)
 
 # Initialize project sources here
 set(BACKTEST_TESTS
-        dataretriever_test.cpp)
+        dataretriever_test.cpp
+        data_test.cpp)
 
 # Build the backtester executable
 add_executable(BacktesterTests

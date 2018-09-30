@@ -9,7 +9,7 @@ namespace backtester {
 
 // Constructor that sets up the connection to the Bloomberg Data API so data can be pulled.
 HistoricalDataManager::HistoricalDataManager(BloombergLP::blpapi::Datetime* p_currentTime) :
-        DataManager(p_currentTime), dr("HISTORICAL") {}
+        DataManager(p_currentTime), dr("HISTORICAL_DATA") {}
 
 // Function that builds the Market Events and puts them onto the HEAP event list in chronological order. Does so
 // by first pulling the EOD last price data for the securities to be traded by the algorithm and then generating Market
@@ -47,17 +47,17 @@ std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> Historica
             const std::vector<std::string> &symbols, const std::vector<std::string> &fields, unsigned int timeunitsback,
             const std::string &frequency) {
 
-    // Find the date N days back from the current date
-    int year = currentTime->year();
-    int month = currentTime->month() - 1;
-    int day = currentTime->day();
-    struct tm timeinfo = {.tm_year=year, .tm_mon=month, .tm_mday=day};
+    // Find the date N days back from the current dates
+    struct tm timeinfo = {0, 0, 0};
+    timeinfo.tm_year = currentTime->year() - 1900;
+    timeinfo.tm_mon = currentTime->month() - 1;
+    timeinfo.tm_mday = currentTime->day();
     // Convert to secs since epoch and go back the specified number of days
     time_t date_seconds = std::mktime(&timeinfo) - (24 * 60 * 60 * (int)timeunitsback);
     // Put the updated date back into a Bloomberg::blpapi::Datetime
     timeinfo = *localtime(&date_seconds);
     BloombergLP::blpapi::Datetime beginDate = BloombergLP::blpapi::Datetime::createDate(
-            static_cast<unsigned int>(timeinfo.tm_year),
+            static_cast<unsigned int>(timeinfo.tm_year) + 1900,
             static_cast<unsigned int>(timeinfo.tm_mon + 1),
             static_cast<unsigned int>(timeinfo.tm_mday));
 

@@ -17,7 +17,6 @@ class DataRetrieverFixture : public ::testing::Test {
 protected:
     void TearDown() override {}
     void SetUp() override {}
-
 public:
     // No construction required
     DataRetrieverFixture() : Test() {}

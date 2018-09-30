@@ -45,7 +45,7 @@ DataRetriever::pullHistoricalData(const std::vector<std::string> &securities,
                                                                const std::string &frequency) {
 
     // Ensure that this instance of DataRetriever is able to take historical data
-    if (type != "HISTORICAL_DATA") { return nullptr; }
+    if (type != "HISTORICAL_DATA") { throw std::runtime_error("Not historical data retriever!"); }
 
     // First open the pipeline for getting historical data by using the Reference Data market service.
     // Then proceed to build a request based on the given parameters.
