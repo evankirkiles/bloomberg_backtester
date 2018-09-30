@@ -6,6 +6,8 @@
 #define BACKTESTER_DATA_HPP
 // Include the Bloomberg includes
 #include "bloombergincludes.hpp"
+// Include datetime for date offsetting
+#include <ctime>
 // Custom class includes
 #include "dataretriever.hpp"
 #include "events.hpp"
@@ -16,6 +18,9 @@ namespace backtester {
 // will be used by all Data Managers in the future.
 class DataManager {
 public:
+    // Constructor initializes currentTime
+    explicit DataManager(BloombergLP::blpapi::Datetime* p_currentTime) : currentTime(p_currentTime) {}
+
     // Pulls history for N time units back from the current date (given to the function) given the parameters.
     // Simply passes a request to a DataRetriever and takes the new data down from Bloomberg.
     virtual std::unique_ptr<std::string, SymbolHistoricalData> history(
@@ -25,7 +30,7 @@ public:
             const std::string& frequency) = 0;
 protected:
     // A reference to the 'current time' simulated by the backtester
-    BloombergLP::blpapi::Datetime* currentTime;
+    BloombergLP::blpapi::Datetime* currentTime{};
 };
 
 // Class for the Historical Data Manager which is the direct link between an algorithm and the Bloomberg API.
@@ -34,7 +39,7 @@ protected:
 class HistoricalDataManager : public DataManager {
 public:
     // Constructor to build the Historical Data Manager
-    HistoricalDataManager(BloombergLP::blpapi::Datetime* currentTime);
+    explicit HistoricalDataManager(BloombergLP::blpapi::Datetime* currentTime);
 
     // Function that initializes the MarketEvents onto the event list in chronological order. Should be called before
     // any backtesting takes place, as it enables the Portfolio to calculate returns and holdings.

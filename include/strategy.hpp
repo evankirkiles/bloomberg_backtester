@@ -5,7 +5,7 @@
 #ifndef BACKTESTER_STRATEGY_HPP
 #define BACKTESTER_STRATEGY_HPP
 
-// Define the Strategy class here, but do not implement it yet
+// The Base strategy class
 class Strategy {
 
 };

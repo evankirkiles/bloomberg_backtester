@@ -9,10 +9,10 @@ namespace backtester {
 
 // Constructor that sets up the connection to the Bloomberg Data API so data can be pulled.
 HistoricalDataManager::HistoricalDataManager(BloombergLP::blpapi::Datetime* p_currentTime) :
-        currentTime(p_currentTime), dr("HISTORICAL") {}
+        DataManager(p_currentTime), dr("HISTORICAL") {}
 
 // Function that builds the Market Events and puts them onto the HEAP event list in chronological order. Does so
-// by first pulling the EOD price data for the securities to be traded by the algorithm and then generating Market
+// by first pulling the EOD last price data for the securities to be traded by the algorithm and then generating Market
 // Events for each date. Goes through each symbol's data one entry at a time at the same time, comparing in case of
 // dates not lining up and then catching up the iterators.
 void HistoricalDataManager::fillHistory(const std::vector<std::string> &symbols,
@@ -38,6 +38,22 @@ void HistoricalDataManager::fillHistory(const std::vector<std::string> &symbols,
         // Now build the Market Event and place it onto the HEAP as a unique ptr
         location->emplace_back(std::make_unique<events::MarketEvent>(symbols, temp, i->first));
     }
+}
+
+// Pulls history data from Bloomberg for a specified number of days before the current date, at a given frequency for
+// set securities and fields. Cannot simply use the data downloaded to build the MarketEvents because that data only
+// contains the last price (PX_LAST) when the algorithm may require other types.
+std::unique_ptr<std::string, SymbolHistoricalData> HistoricalDataManager::history(
+            const std::vector<std::string> &symbols, const std::vector<std::string> &fields, unsigned int timeunitsback,
+            const std::string &frequency) {
+
+    // TODO: Manage date time settings
+    // First get the start date by going N days back from
+
+    // Simply tunnels the request through to the DataRetriever, filling in the end date as the current date of
+    // the local pointer to the simulated current date.
+    return dr.pullHistoricalData(symbols, );
+
 }
 
 }
