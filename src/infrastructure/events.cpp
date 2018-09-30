@@ -17,7 +17,7 @@ ScheduledEvent::ScheduledEvent(void *p_function, Strategy &p_strat,
 
 // Print function for Scheduled Event
 void ScheduledEvent::what() {
-    std::cout << "Event: SCHEDULED\nDatetime: " << datetime.toString() << "\n";
+    std::cout << "Event: SCHEDULED\nDatetime: " << datetime << "\n";
 }
 
 // Market Event initializer list
@@ -30,7 +30,7 @@ MarketEvent::MarketEvent(const std::vector<std::string> &p_symbols,
 
 // Print function for MarketEvent
 void MarketEvent::what() {
-    std::cout << "Event: MARKET\nDatetime: " << datetime.toString() << "\nSymbols: ";
+    std::cout << "Event: MARKET\nDatetime: " << datetime << "\nSymbols: ";
     for (const std::string &i : symbols) { std::cout << i << ", "; };
     std::cout << "\b\n";
 }
@@ -55,7 +55,7 @@ OrderEvent::OrderEvent(const std::string &p_symbol, int p_quantity) :
 
 // Print function for the OrderEvent
 void OrderEvent::what() {
-    std::cout << "Event: ORDER\nDatetime: " << datetime.toString() << "\nSymbol: " << symbol << "\nQuantity: "
+    std::cout << "Event: ORDER\nDatetime: " << datetime << "\nSymbol: " << symbol << "\nQuantity: "
               << quantity << "\n";
 }
 

@@ -43,17 +43,27 @@ void HistoricalDataManager::fillHistory(const std::vector<std::string> &symbols,
 // Pulls history data from Bloomberg for a specified number of days before the current date, at a given frequency for
 // set securities and fields. Cannot simply use the data downloaded to build the MarketEvents because that data only
 // contains the last price (PX_LAST) when the algorithm may require other types.
-std::unique_ptr<std::string, SymbolHistoricalData> HistoricalDataManager::history(
+std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> HistoricalDataManager::history(
             const std::vector<std::string> &symbols, const std::vector<std::string> &fields, unsigned int timeunitsback,
             const std::string &frequency) {
 
-    // TODO: Manage date time settings
-    // First get the start date by going N days back from
+    // Find the date N days back from the current date
+    int year = currentTime->year();
+    int month = currentTime->month() - 1;
+    int day = currentTime->day();
+    struct tm timeinfo = {.tm_year=year, .tm_mon=month, .tm_mday=day};
+    // Convert to secs since epoch and go back the specified number of days
+    time_t date_seconds = std::mktime(&timeinfo) - (24 * 60 * 60 * (int)timeunitsback);
+    // Put the updated date back into a Bloomberg::blpapi::Datetime
+    timeinfo = *localtime(&date_seconds);
+    BloombergLP::blpapi::Datetime beginDate = BloombergLP::blpapi::Datetime::createDate(
+            static_cast<unsigned int>(timeinfo.tm_year),
+            static_cast<unsigned int>(timeinfo.tm_mon + 1),
+            static_cast<unsigned int>(timeinfo.tm_mday));
 
     // Simply tunnels the request through to the DataRetriever, filling in the end date as the current date of
     // the local pointer to the simulated current date.
-    return dr.pullHistoricalData(symbols, );
-
+    return std::move(dr.pullHistoricalData(symbols, beginDate, *currentTime, fields, frequency));
 }
 
 }

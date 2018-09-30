@@ -7,7 +7,7 @@
 // Include the Bloomberg includes
 #include "bloombergincludes.hpp"
 // Include datetime for date offsetting
-#include <ctime>
+#include <time.h>
 // Custom class includes
 #include "dataretriever.hpp"
 #include "events.hpp"
@@ -23,7 +23,7 @@ public:
 
     // Pulls history for N time units back from the current date (given to the function) given the parameters.
     // Simply passes a request to a DataRetriever and takes the new data down from Bloomberg.
-    virtual std::unique_ptr<std::string, SymbolHistoricalData> history(
+    virtual std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> history(
             const std::vector<std::string>& symbols,
             const std::vector<std::string>& fields,
             unsigned int timeunitsback,
@@ -49,7 +49,7 @@ public:
             std::list<std::unique_ptr<events::Event>>* location);
 
     // The inherited function override to pull history from Bloomberg API.
-    std::unique_ptr<std::string, SymbolHistoricalData> history(
+    std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> history(
             const std::vector<std::string>& symbols,
             const std::vector<std::string>& fields,
             unsigned int timeunitsback,
