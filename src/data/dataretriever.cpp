@@ -4,8 +4,6 @@
 
 // Include header
 #include "dataretriever.hpp"
-// Global backtester namespace
-namespace backtester {
 
 // Constructor to build an instance of the DataRetriever for the given type of data.
 //
@@ -175,6 +173,4 @@ bool HistoricalDataHandler::processExceptionsAndErrors(BloombergLP::blpapi::Mess
         return true;
     }
     return false;
-}
-
 }

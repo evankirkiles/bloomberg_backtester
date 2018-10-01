@@ -12,9 +12,6 @@
 // Project constant includes
 #include "constants.hpp"
 
-// Global namespace
-namespace backtester {
-
 // Inline function to parse the Bloomberg Historical Data formatted date from a normal Datetime.
 inline std::string get_date_formatted(const BloombergLP::blpapi::Datetime& date) {
     std::stringstream str;
@@ -81,7 +78,5 @@ struct HistoricalDataHandler {
     // A pointer to the object into which historical data is filled.
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> target;
 };
-
-}
 
 #endif //BACKTESTER_DATARETRIEVER_HPP

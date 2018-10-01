@@ -23,6 +23,7 @@
 #include <memory>
 // Standard library includes
 #include <vector>
+#include <queue>
 #include <map>
 #include <unordered_map>
 #include <list>

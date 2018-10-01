@@ -5,8 +5,6 @@
 // Include the correlated header
 #include "data.hpp"
 
-namespace backtester {
-
 // Constructor that sets up the connection to the Bloomberg Data API so data can be pulled.
 HistoricalDataManager::HistoricalDataManager(BloombergLP::blpapi::Datetime* p_currentTime) :
         DataManager(p_currentTime), dr("HISTORICAL_DATA") {}
@@ -64,6 +62,4 @@ std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> Historica
     // Simply tunnels the request through to the DataRetriever, filling in the end date as the current date of
     // the local pointer to the simulated current date.
     return std::move(dr.pullHistoricalData(symbols, beginDate, *currentTime, fields, frequency));
-}
-
 }

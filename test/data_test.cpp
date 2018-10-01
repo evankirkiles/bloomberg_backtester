@@ -34,7 +34,7 @@ TEST(HistoricalDataManagerFixture, builds_market_events) { // NOLINT(cert-err58-
     // Also use a fake current
     BloombergLP::blpapi::Datetime current_time = BloombergLP::blpapi::Datetime::createDate(2018, 8, 3);
     // Create the data manager with a reference to the fake time
-    backtester::HistoricalDataManager hdm(&current_time);
+    HistoricalDataManager hdm(&current_time);
 
     // Now try to fill the event HEAP
     EXPECT_NO_THROW(hdm.fillHistory({"IBM US EQUITY", "GOOG"}, start, end, &fake_heap)); // NOLINT(cppcoreguidelines-avoid-goto)
@@ -48,16 +48,16 @@ TEST(HistoricalDataManagerFixture, history) { // NOLINT(cert-err58-cpp)
     // Build the fake current time
     BloombergLP::blpapi::Datetime current_time = BloombergLP::blpapi::Datetime::createDate(2018, 8, 3);
     // Create the data manager with a reference to the fake time
-    backtester::HistoricalDataManager hdm(&current_time);
+    HistoricalDataManager hdm(&current_time);
 
     // Now try pulling the historical data
-    std::unique_ptr<std::unordered_map<std::string, backtester::SymbolHistoricalData>> data;
+    std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> data;
     EXPECT_NO_THROW(data = hdm.history({"IBM US EQUITY", "GOOG US EQUITY"}, {"PX_LAST"}, 20, "DAILY")); // NOLINT(cppcoreguidelines-avoid-goto)
 
-//  // Check the data
-    auto i = data->operator[]("IBM US EQUITY").data.begin();
-    while (i != data->operator[]("IBM US EQUITY").data.end()) {
-        std::cout << "DATE: " << i->first << ", PX_LAST: " << i->second["PX_LAST"] << std::endl;
-        ++i;
-    }
+//    // Check the data
+//    auto i = data->operator[]("IBM US EQUITY").data.begin();
+//    while (i != data->operator[]("IBM US EQUITY").data.end()) {
+//        std::cout << "DATE: " << i->first << ", PX_LAST: " << i->second["PX_LAST"] << std::endl;
+//        ++i;
+//    }
 }

@@ -12,8 +12,6 @@
 #include "dataretriever.hpp"
 #include "events.hpp"
 
-namespace backtester {
-
 // Base class of DataManagers which simply defines the pure virtual function to pull historical data, which
 // will be used by all Data Managers in the future.
 class DataManager {
@@ -58,7 +56,5 @@ private:
     // The Data Retriever module itself used by the history and buildHistory functions to query Bloomberg API
     DataRetriever dr;
 };
-
-}
 
 #endif //BACKTESTER_DATA_HPP
