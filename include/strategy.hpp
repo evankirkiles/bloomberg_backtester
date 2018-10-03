@@ -59,6 +59,10 @@ public:
             const BloombergLP::blpapi::Datetime& end_date);
 
     void run();
+
+private:
+    const unsigned int initial_capital;
+    const BloombergLP::blpapi::Datetime start_date, end_date;
 };
 
 #endif //BACKTESTER_STRATEGY_HPP
