@@ -11,6 +11,7 @@
 // Custom class includes
 #include "dataretriever.hpp"
 #include "events.hpp"
+#include "daterules.hpp"
 
 // Base class of DataManagers which simply defines the pure virtual function to pull historical data, which
 // will be used by all Data Managers in the future.

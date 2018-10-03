@@ -65,4 +65,40 @@ private:
     const BloombergLP::blpapi::Datetime start_date, end_date;
 };
 
+// Returns an iterator pointing to the first date on the event HEAP which is greater than the specified date. Will be
+// used in scheduling functions to place the ScheduleEvents in between the MarketEvents
+struct first_date_greater {
+    explicit first_date_greater(const BloombergLP::blpapi::Datetime& p_date) : date(p_date) {}
+    const BloombergLP::blpapi::Datetime date;
+    inline bool operator()(const std::unique_ptr<events::Event> data) {
+        // Returns true for the first element whose date is later by checking all datetime fields
+        // If all fields are equal, still returns false because do not want to schedule before the same date
+        if (data->datetime.year() > date.year()) return true;
+        else if (data->datetime.year() < date.year()) return false;
+        else {
+            if (data->datetime.month() > date.month()) return true;
+            else if (data->datetime.month() < date.month()) return false;
+            else {
+                if (data->datetime.day() > date.day()) return true;
+                else if (data->datetime.day() < date.day()) return false;
+                else {
+                    if (data->datetime.hours() > date.hours()) return true;
+                    else if (data->datetime.hours() < date.hours()) return false;
+                    else {
+                        if (data->datetime.minutes() > date.minutes()) return true;
+                        else if (data->datetime.minutes() < date.minutes()) return false;
+                        else {
+                            if (data->datetime.seconds() > date.seconds()) return true;
+                            else if (data->datetime.seconds() < date.seconds()) return false;
+                            else {
+                                return data->datetime.milliseconds() > date.milliseconds();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
 #endif //BACKTESTER_STRATEGY_HPP

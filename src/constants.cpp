@@ -39,3 +39,18 @@ namespace element_names {
     const char* MESSAGE("message");
     const char* CODE("code");
 }
+
+// Enums for the date rules specifying types
+namespace date_time_enums {
+    const unsigned int EVERY_DAY = 0;
+    const unsigned int WEEK_START = 1;
+    const unsigned int WEEK_END = 2;
+    const unsigned int MONTH_START = 3;
+    const unsigned int MONTH_END = 4;
+
+    const unsigned int MARKET_OPEN = 0;
+    const unsigned int MARKET_CLOSE = 1;
+
+    const unsigned int US_MARKET_EARLY_CLOSE_HOUR = 13;
+    const unsigned int US_MARKET_EARLY_CLOSE_MINUTE = 0;
+}

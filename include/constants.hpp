@@ -43,4 +43,19 @@ namespace element_names {
     extern const char* CODE;
 }
 
+// Enums for the date rules specifying types
+namespace date_time_enums {
+    extern const unsigned int EVERY_DAY;
+    extern const unsigned int WEEK_START;
+    extern const unsigned int WEEK_END;
+    extern const unsigned int MONTH_START;
+    extern const unsigned int MONTH_END;
+
+    extern const unsigned int T_MARKET_OPEN;
+    extern const unsigned int T_MARKET_CLOSE;
+
+    extern const unsigned int US_MARKET_EARLY_CLOSE_HOUR;
+    extern const unsigned int US_MARKET_EARLY_CLOSE_MINUTE;
+}
+
 #endif //BACKTESTER_CONSTANTS_HPP

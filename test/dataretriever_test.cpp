@@ -43,11 +43,11 @@ TEST(DataRetrieverFixture, pulls_data) { // NOLINT(cert-err58-cpp)
             BloombergLP::blpapi::Datetime(2005, 3, 3, 0, 0, 0, 0),
             BloombergLP::blpapi::Datetime(2006, 3, 3, 0, 0, 0, 0));
     // Uncomment this code to print out the data retrieved
-//    auto i = data->operator[]("IBM US EQUITY").data.begin();
-//    while (i != data->operator[]("IBM US EQUITY").data.end()) {
-//        std::cout << "DATE: " << i->first << ", PX_LAST: " << i->second["PX_LAST"] << std::endl;
-//        ++i;
-//    }
+    auto i = data->operator[]("IBM US EQUITY").data.begin();
+    while (i != data->operator[]("IBM US EQUITY").data.end()) {
+        std::cout << "DATE: " << i->first << ", PX_LAST: " << i->second["PX_LAST"] << std::endl;
+        ++i;
+    }
     EXPECT_EQ(92.41, data->operator[]("IBM US EQUITY").data.begin()->second["PX_LAST"]);
 }
 

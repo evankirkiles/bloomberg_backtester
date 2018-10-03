@@ -20,6 +20,7 @@ set(BACKTEST_SRCS
         src/data/data.cpp
         src/constants.cpp
         src/infrastructure/events.cpp
+        src/infrastructure/daterules.cpp
         src/strategy/strategy.cpp)
 
 # Build the backtester executable

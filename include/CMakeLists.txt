@@ -6,12 +6,14 @@ set(BACKTEST_HEADERS
         constants.hpp
         dataretriever.hpp
         data.hpp
+        daterules.hpp
         events.hpp
         strategy.hpp)
 set(BACKTEST_SRCS
         ../src/data/dataretriever.cpp
         ../src/constants.cpp
         ../src/data/data.cpp
+        ../src/infrastructure/daterules.cpp
         ../src/strategy/strategy.cpp
         ../src/infrastructure/events.cpp)
 
