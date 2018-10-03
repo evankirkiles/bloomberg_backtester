@@ -1,8 +1,9 @@
-#include <utility>
-
 //
 // Created by Evan Kirkiles on 9/27/2018.
 //
+
+// Code works when I include this
+#include <utility>
 
 #ifndef BACKTESTER_EVENTS_HPP
 #define BACKTESTER_EVENTS_HPP

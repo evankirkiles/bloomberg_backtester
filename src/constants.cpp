@@ -48,8 +48,13 @@ namespace date_time_enums {
     const unsigned int MONTH_START = 3;
     const unsigned int MONTH_END = 4;
 
-    const unsigned int MARKET_OPEN = 0;
-    const unsigned int MARKET_CLOSE = 1;
+    const unsigned int T_MARKET_OPEN = 0;
+    const unsigned int T_MARKET_CLOSE = 1;
+
+    const unsigned int US_MARKET_OPEN_HOUR = 9;
+    const unsigned int US_MARKET_OPEN_MINUTE = 0;
+    const unsigned int US_MARKET_CLOSE_HOUR = 1;
+    const unsigned int US_MARKET_CLOSE_MINUTE = 0;
 
     const unsigned int US_MARKET_EARLY_CLOSE_HOUR = 13;
     const unsigned int US_MARKET_EARLY_CLOSE_MINUTE = 0;

@@ -6,8 +6,6 @@
 #define BACKTESTER_DATA_HPP
 // Include the Bloomberg includes
 #include "bloombergincludes.hpp"
-// Include datetime for date offsetting
-#include <time.h>
 // Custom class includes
 #include "dataretriever.hpp"
 #include "events.hpp"

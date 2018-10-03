@@ -46,18 +46,7 @@ std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> Historica
             const std::string &frequency) {
 
     // Find the date N days back from the current dates
-    struct tm timeinfo = {0, 0, 0};
-    timeinfo.tm_year = currentTime->year() - 1900;
-    timeinfo.tm_mon = currentTime->month() - 1;
-    timeinfo.tm_mday = currentTime->day();
-    // Convert to secs since epoch and go back the specified number of days
-    time_t date_seconds = std::mktime(&timeinfo) - (24 * 60 * 60 * (int)timeunitsback);
-    // Put the updated date back into a Bloomberg::blpapi::Datetime
-    timeinfo = *localtime(&date_seconds);
-    BloombergLP::blpapi::Datetime beginDate = BloombergLP::blpapi::Datetime::createDate(
-            static_cast<unsigned int>(timeinfo.tm_year) + 1900,
-            static_cast<unsigned int>(timeinfo.tm_mon + 1),
-            static_cast<unsigned int>(timeinfo.tm_mday));
+    BloombergLP::blpapi::Datetime beginDate = date_funcs::add_seconds(*currentTime, 24 * 60 * 60 * timeunitsback * -1);
 
     // Simply tunnels the request through to the DataRetriever, filling in the end date as the current date of
     // the local pointer to the simulated current date.

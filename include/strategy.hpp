@@ -2,6 +2,9 @@
 // Created by Evan Kirkiles on 9/27/2018.
 //
 
+// Code works for some reason when I include this STL above the ifndef, IDK WHY
+#include <utility>
+
 #ifndef BACKTESTER_STRATEGY_HPP
 #define BACKTESTER_STRATEGY_HPP
 // Bloomberg includes

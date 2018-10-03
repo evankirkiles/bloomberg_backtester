@@ -6,6 +6,8 @@
 #define BACKTESTER_DATERULES_HPP
 // Bloomberg includes
 #include "bloombergincludes.hpp"
+// Include datetime for date offsetting
+#include <time.h>
 // Custom class includes
 #include "constants.hpp"
 
@@ -19,12 +21,13 @@
 // use the time rule for that specific day.
 class TimeRules {
 public:
+    // Important: Minutes must be in range of 0 to 59, and hours must be in range of 0 to 3
     static TimeRules market_open(unsigned int hours = 0, unsigned int minutes = 0);
     static TimeRules market_close(unsigned int hours = 0, unsigned int minutes = 0);
 
     // Returns the specified time for a given day as a tuple of <hours, minutes, seconds> by checking
     // against the standard closing times and then against all the holidays
-    std::tuple<int, int, int> get_time(BloombergLP::blpapi::Datetime date);
+    BloombergLP::blpapi::Datetime get_time(BloombergLP::blpapi::Datetime date);
 
 private:
     const int type;
@@ -59,7 +62,8 @@ private:
 
 // Declare the function which adds a set number of seconds to a datetime object and returns a copy
 namespace date_funcs {
-
+    BloombergLP::blpapi::Datetime add_seconds(const BloombergLP::blpapi::Datetime& currentTime, int seconds,
+            bool weekDaysOnly = false);
 }
 
 // Declare all market holidays in this map for each year. (Inefficient, I know, but I don't know any way around this).
