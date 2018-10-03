@@ -4,6 +4,7 @@ project(backtester_libs)
 set(BACKTEST_HEADERS
         bloombergincludes.hpp
         constants.hpp
+        holidays.hpp
         dataretriever.hpp
         data.hpp
         daterules.hpp
@@ -12,6 +13,7 @@ set(BACKTEST_HEADERS
 set(BACKTEST_SRCS
         ../src/data/dataretriever.cpp
         ../src/constants.cpp
+        ../src/holidays.cpp
         ../src/data/data.cpp
         ../src/infrastructure/daterules.cpp
         ../src/strategy/strategy.cpp

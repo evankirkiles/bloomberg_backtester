@@ -8,18 +8,6 @@
 // This file simply contains all the initializer lists for each Event object
 namespace events {
 
-// Scheduled Event initializer list
-ScheduledEvent::ScheduledEvent(void *p_function, Strategy &p_strat,
-                               const BloombergLP::blpapi::Datetime &p_when) :
-        Event("SCHEDULED", p_when),
-        function(p_function),
-        instance(p_strat) {}
-
-// Print function for Scheduled Event
-void ScheduledEvent::what() {
-    std::cout << "Event: SCHEDULED\nDatetime: " << datetime << "\n";
-}
-
 // Market Event initializer list
 MarketEvent::MarketEvent(const std::vector<std::string> &p_symbols,
                          const std::unordered_map<std::string, double> &p_data,

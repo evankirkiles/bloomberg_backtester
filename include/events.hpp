@@ -2,16 +2,11 @@
 // Created by Evan Kirkiles on 9/27/2018.
 //
 
-// Code works when I include this
-#include <utility>
-
 #ifndef BACKTESTER_EVENTS_HPP
 #define BACKTESTER_EVENTS_HPP
 
 // Include bloomberg includes
 #include "bloombergincludes.hpp"
-// Include Strategy class for scheduled events
-#include "strategy.hpp"
 
 namespace events {
 
@@ -40,24 +35,6 @@ struct Event {
 protected:
     Event(std::string p_type, const BloombergLP::blpapi::Datetime& p_datetime) :
             type(std::move(p_type)), datetime(p_datetime) {};
-};
-
-// Scheduled Event that is placed onto the stack depending on when the algorithm has scheduled it to run. This
-// is the module that allows for functions to be run at certain times during the calendar. Rather than have a running
-// clock which determines the time the function runs, the functions are simply placed in order on the heap.
-//
-// @member function        A reference to the strategy's function which is to be called upon event consumption
-// @member instance        A reference to the strategy itself so its member function can be called
-//
-struct ScheduledEvent : public Event {
-    void (*function);
-    Strategy &instance;
-
-    // Print function
-    void what();
-
-    // Constructor for the ScheduledEvent
-    ScheduledEvent(void (*function), Strategy &strat, const BloombergLP::blpapi::Datetime &when);
 };
 
 // MarketEvent that is produced by the DataManager class when the strategy is initialized. These are added onto the
@@ -138,4 +115,5 @@ struct FillEvent : public Event {
 };
 
 }
+
 #endif //BACKTESTER_EVENTS_HPP

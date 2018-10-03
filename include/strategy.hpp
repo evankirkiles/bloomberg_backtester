@@ -2,16 +2,13 @@
 // Created by Evan Kirkiles on 9/27/2018.
 //
 
-// Code works for some reason when I include this STL above the ifndef, IDK WHY
-#include <utility>
-
 #ifndef BACKTESTER_STRATEGY_HPP
 #define BACKTESTER_STRATEGY_HPP
 // Bloomberg includes
 #include "bloombergincludes.hpp"
 // Custom class includes
-#include "dataretriever.hpp"
 #include "events.hpp"
+#include "dataretriever.hpp"
 #include "data.hpp"
 
 // Base Strategy class to be inherited by all strategies.
@@ -48,7 +45,7 @@ protected:
     std::list<std::unique_ptr<events::Event>> heap_eventlist;
 
     // Other custom algorithmic components
-    DataManager data_manager;
+//    DataManager data_manager;
     // ExecutionHandler execution_handler;
 };
 
@@ -103,5 +100,29 @@ struct first_date_greater {
         }
     }
 };
+
+// Implementation of ScheduledFunction is in strategy class because needs to have a reference to Startegy object
+// and do not want circular dependencies.
+
+namespace events {
+// Scheduled Event that is placed onto the stack depending on when the algorithm has scheduled it to run. This
+// is the module that allows for functions to be run at certain times during the calendar. Rather than have a running
+// clock which determines the time the function runs, the functions are simply placed in order on the heap.
+//
+// @member function        A reference to the strategy's function which is to be called upon event consumption
+// @member instance        A reference to the strategy itself so its member function can be called
+//
+    struct ScheduledEvent : public Event {
+        void (*function);
+        Strategy &instance;
+
+        // Print function
+        void what();
+
+        // Constructor for the ScheduledEvent
+        ScheduledEvent(void (*function), Strategy &strat, const BloombergLP::blpapi::Datetime &when);
+    };
+
+}
 
 #endif //BACKTESTER_STRATEGY_HPP

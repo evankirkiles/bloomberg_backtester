@@ -19,6 +19,7 @@ set(BACKTEST_SRCS
         src/data/dataretriever.cpp
         src/data/data.cpp
         src/constants.cpp
+        src/holidays.cpp
         src/infrastructure/events.cpp
         src/infrastructure/daterules.cpp
         src/strategy/strategy.cpp)

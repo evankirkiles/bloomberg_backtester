@@ -10,7 +10,7 @@
 #include <time.h>
 // Custom class includes
 #include "constants.hpp"
-
+#include "holidays.hpp"
 
 // Contains the date rules for scheduling functions, almost exactly like how Quantopian does it. Dynamically
 // schedules based on date params for every_day, week_open, week_end, month_open, month_end. You
@@ -66,13 +66,5 @@ namespace date_funcs {
             bool weekDaysOnly = false);
 }
 
-// Declare all market holidays in this map for each year. (Inefficient, I know, but I don't know any way around this).
-namespace time_holidays {
-    // Access like: holidays[${YEARS SINCE 1900}][${MONTH - 1}][${DAY OF MONTH}]
-    extern const std::unordered_map<
-            unsigned int, std::unordered_map<
-            unsigned int, std::unordered_map<
-            unsigned int, std::string>>> holidays_US;
-}
 
 #endif //BACKTESTER_DATERULES_HPP
