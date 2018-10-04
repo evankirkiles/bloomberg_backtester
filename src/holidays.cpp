@@ -6,11 +6,11 @@
 #include "holidays.hpp"
 
 // Define all holidays here for necessary years
-namespace holidays {
+namespace time_holidays {
     const std::unordered_map<
             unsigned int, std::unordered_map<
                     unsigned int, std::unordered_map<
-                                  unsigned int, std::string>>> holidays_US = {
+                                  unsigned int, std::string>>> holidays_US = { // NOLINT(cert-err58-cpp)
             // 2020
             {50, {
                          // January 1, New Year's Day

@@ -26,8 +26,10 @@ public:
     static TimeRules market_close(unsigned int hours = 0, unsigned int minutes = 0);
 
     // Returns the specified time for a given day as a tuple of <hours, minutes, seconds> by checking
-    // against the standard closing times and then against all the holidays
-    BloombergLP::blpapi::Datetime get_time(BloombergLP::blpapi::Datetime date);
+    // against the standard closing times and then against all the holidays. If the mode is weekly and
+    // there are no more trading days left in the week, then the function is not scheduled for that week.
+    // The datetime returned in that case will be in 1970, which must be checked for and not scheduled.
+    BloombergLP::blpapi::Datetime get_time(BloombergLP::blpapi::Datetime date, unsigned int mode);
 
 private:
     const int type;
@@ -62,8 +64,14 @@ private:
 
 // Declare the function which adds a set number of seconds to a datetime object and returns a copy
 namespace date_funcs {
+    // The current time is the date which will use the offset seconds. When weekDaysOnly is true, the function
+    // will continue to add the number of seconds until it is no longer on a weekend. Finally, mode is used to
+    // specify different time masks. For example, when we are scheduling every day functions (0), if the time
+    // would transfer into another day we simply do not want to schedule a function. When weekly (1 || 2), we do not
+    // want the seconds added to exceed the current week. Finally, when monthly (3||4), we do not want the seconds
+    // to escape the current month.
     BloombergLP::blpapi::Datetime add_seconds(const BloombergLP::blpapi::Datetime& currentTime, int seconds,
-            bool weekDaysOnly = false);
+            bool weekDaysOnly = false, int mode = -1);
 }
 
 
