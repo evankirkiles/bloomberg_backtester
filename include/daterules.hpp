@@ -29,7 +29,7 @@ public:
     // against the standard closing times and then against all the holidays. If the mode is weekly and
     // there are no more trading days left in the week, then the function is not scheduled for that week.
     // The datetime returned in that case will be in 1970, which must be checked for and not scheduled.
-    BloombergLP::blpapi::Datetime get_time(BloombergLP::blpapi::Datetime date, unsigned int mode);
+    BloombergLP::blpapi::Datetime get_time(BloombergLP::blpapi::Datetime date, unsigned int mode) const;
 
 private:
     const int type;
@@ -44,9 +44,9 @@ private:
 class DateRules {
 public:
     DateRules every_day();
-    DateRules week_open(int days_offset = 0);
+    DateRules week_start(int days_offset = 0);
     DateRules week_end(int days_offset = 0);
-    DateRules month_open(int days_offset = 0);
+    DateRules month_start(int days_offset = 0);
     DateRules month_end(int days_offset = 0);
 
     // Builds a date rules object with the start and end date of strategies to enable scheduling. All date rules
@@ -55,11 +55,11 @@ public:
             int type = -1, int days_offset = 0);
 
     // Gets the schedule of dates and times at which the algorithm will be run
-    std::vector<BloombergLP::blpapi::Datetime> getDateTimes(const TimeRules& time_rules);
+    std::vector<BloombergLP::blpapi::Datetime> get_date_times(const TimeRules& time_rules);
 
 private:
-    const int type;
-    const unsigned int days_offset;
+    const BloombergLP::blpapi::Datetime start_date, end_date;
+    const int type, days_offset;
 };
 
 // Declare the function which adds a set number of seconds to a datetime object and returns a copy
