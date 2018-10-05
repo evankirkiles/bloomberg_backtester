@@ -98,7 +98,7 @@ DateRules DateRules::month_start(int days_offset) { return DateRules(start_date,
 DateRules DateRules::month_end(int days_offset) { return DateRules(start_date, end_date, 4, days_offset); }
 
 // Returns a vector of datetimes at which to schedule the function calls.
-std::vector<BloombergLP::blpapi::Datetime> DateRules::get_date_times(const TimeRules &time_rules) {
+std::vector<BloombergLP::blpapi::Datetime> DateRules::get_date_times(const TimeRules &time_rules) const {
     // First, get the timeinfos for the start and end dates
     struct tm start_time = {0, 0, 0};
     start_time.tm_year = start_date.year() - 1900;

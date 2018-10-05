@@ -55,7 +55,7 @@ public:
             int type = -1, int days_offset = 0);
 
     // Gets the schedule of dates and times at which the algorithm will be run
-    std::vector<BloombergLP::blpapi::Datetime> get_date_times(const TimeRules& time_rules);
+    std::vector<BloombergLP::blpapi::Datetime> get_date_times(const TimeRules& time_rules) const;
 
 private:
     const BloombergLP::blpapi::Datetime start_date, end_date;
@@ -72,6 +72,8 @@ namespace date_funcs {
     // to escape the current month.
     BloombergLP::blpapi::Datetime add_seconds(const BloombergLP::blpapi::Datetime& currentTime, int seconds,
             bool weekDaysOnly = false, int mode = -1);
+
+    // Unary compare function for use in inserting
 }
 
 
