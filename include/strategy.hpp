@@ -26,12 +26,20 @@ public:
     // List of the Bloomberg access symbols for all securities being run in algo
     const std::vector<std::string> symbol_list;
 
+    // Initializes the base strategy params
+    BaseStrategy(std::vector<std::string> symbol_list,
+                unsigned int initial_capital,
+                const BloombergLP::blpapi::Datetime& start,
+                const BloombergLP::blpapi::Datetime& end,
+                const std::string& type = "HISTORICAL DATA");
+
     // Public portfolio so it can be accessed by graphing components
     // Portfolio portfolio;
 
     // Runs the strategy itself, should be called on a new thread
     virtual void run()=0;
 protected:
+    const unsigned int initial_capital;
     const BloombergLP::blpapi::Datetime start_date, end_date;
     BloombergLP::blpapi::Datetime current_time;
 
@@ -45,7 +53,7 @@ protected:
     std::list<std::unique_ptr<events::Event>> heap_eventlist;
 
     // Other custom algorithmic components
-//    DataManager data_manager;
+    std::unique_ptr<DataManager> data_manager;
     // ExecutionHandler execution_handler;
 };
 
@@ -54,7 +62,8 @@ protected:
 // user does not have access to the complete back end code behind the functioning and so cannot mess much up.
 class Strategy : public BaseStrategy {
 public:
-    Strategy(unsigned int initial_capital,
+    Strategy(const std::vector<std::string>& symbol_list,
+            unsigned int initial_capital,
             const BloombergLP::blpapi::Datetime& start_date,
             const BloombergLP::blpapi::Datetime& end_date);
 
@@ -63,10 +72,6 @@ public:
     // Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference
     // to this strategy class on the HEAP event list. Then, the function is called at a specific simulated date.
     void schedule_function(void (*func), const DateRules& dateRules, const TimeRules& timeRules);
-
-private:
-    const unsigned int initial_capital;
-    const BloombergLP::blpapi::Datetime start_date, end_date;
 };
 
 // Returns an iterator pointing to the first date on the event HEAP which is greater than the specified date. Will be

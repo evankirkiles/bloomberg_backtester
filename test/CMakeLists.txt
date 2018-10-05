@@ -19,7 +19,8 @@ add_subdirectory(lib/googletest)
 set(BACKTEST_TESTS
         dataretriever_test.cpp
         data_test.cpp
-        daterules_test.cpp)
+        daterules_test.cpp
+        strategy_test.cpp)
 
 # Build the backtester executable
 add_executable(BacktesterTests

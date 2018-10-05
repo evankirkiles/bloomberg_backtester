@@ -25,6 +25,9 @@ public:
     static TimeRules market_open(unsigned int hours = 0, unsigned int minutes = 0);
     static TimeRules market_close(unsigned int hours = 0, unsigned int minutes = 0);
 
+    // Default constructor for timerules
+    explicit TimeRules(int type = -1, unsigned int hours = 0, unsigned int minutes = 0);
+
     // Returns the specified time for a given day as a tuple of <hours, minutes, seconds> by checking
     // against the standard closing times and then against all the holidays. If the mode is weekly and
     // there are no more trading days left in the week, then the function is not scheduled for that week.
@@ -34,8 +37,6 @@ public:
 private:
     const int type;
     const unsigned int hours, minutes;
-    // This is private just for consistency so passing a timerules into schedule function is consistent like daterules
-    explicit TimeRules(int type = -1, unsigned int hours = 0, unsigned int minutes = 0);
 };
 
 // Date Rules class which contains the functions for specifying on which days to run the algorithm. Used

@@ -24,7 +24,7 @@ public:
             const std::vector<std::string>& symbols,
             const std::vector<std::string>& fields,
             unsigned int timeunitsback,
-            const std::string& frequency="DAILY") = 0;
+            const std::string& frequency) = 0;
 protected:
     // A reference to the 'current time' simulated by the backtester
     BloombergLP::blpapi::Datetime* currentTime{};
