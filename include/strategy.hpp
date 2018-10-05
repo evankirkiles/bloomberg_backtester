@@ -74,7 +74,7 @@ private:
 struct first_date_greater : public std::unary_function<BloombergLP::blpapi::Datetime, bool> {
     explicit first_date_greater(const BloombergLP::blpapi::Datetime& p_date) : date(p_date) {}
     const BloombergLP::blpapi::Datetime date;
-    inline bool operator()(const std::unique_ptr<events::Event> data) {
+    inline bool operator()(const std::unique_ptr<events::Event>& data) {
         // Returns true for the first element whose date is later by checking all datetime fields
         // If all fields are equal, still returns false because do not want to schedule before the same date
         if (data->datetime.year() > date.year()) return true;
@@ -118,13 +118,13 @@ namespace events {
 //
     struct ScheduledEvent : public Event {
         void (*function);
-        Strategy &instance;
+        Strategy* instance;
 
         // Print function
-        void what();
+        void what() override;
 
         // Constructor for the ScheduledEvent
-        ScheduledEvent(void (*function), Strategy &strat, const BloombergLP::blpapi::Datetime &when);
+        ScheduledEvent(void (*function), Strategy* strat, const BloombergLP::blpapi::Datetime &when);
     };
 
 }

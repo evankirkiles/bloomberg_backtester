@@ -22,7 +22,7 @@ void Strategy::schedule_function(void *func, const DateRules& dateRules, const T
 // Event initialization for ScheduledEvent
 namespace events {
 // Scheduled Event initializer list
-ScheduledEvent::ScheduledEvent(void *p_function, Strategy &p_strat,
+ScheduledEvent::ScheduledEvent(void *p_function, Strategy* p_strat,
                                const BloombergLP::blpapi::Datetime &p_when) :
         Event("SCHEDULED", p_when),
         function(p_function),
