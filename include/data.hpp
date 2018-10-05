@@ -53,7 +53,7 @@ public:
             const std::string& frequency) override;
 private:
     // The Data Retriever module itself used by the history and buildHistory functions to query Bloomberg API
-    DataRetriever dr;
+    HistoricalDataHandler dr;
 };
 
 #endif //BACKTESTER_DATA_HPP

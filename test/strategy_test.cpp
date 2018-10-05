@@ -32,5 +32,5 @@ TEST(StrategyFixture, schedule_functions) { // NOLINT(cert-err58-cpp)
             BloombergLP::blpapi::Datetime(2005, 1, 1, 0, 0, 0));
 
     // Build the market events
-
+    strat.data_manager->strat.heap_eventlist;
 }

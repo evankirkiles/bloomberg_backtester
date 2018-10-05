@@ -6,6 +6,8 @@
 #define BACKTESTER_STRATEGY_HPP
 // Bloomberg includes
 #include "bloombergincludes.hpp"
+// Include Google Test for production
+#include <gtest/gtest_prod.h>
 // Custom class includes
 #include "events.hpp"
 #include "dataretriever.hpp"
@@ -72,6 +74,9 @@ public:
     // Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference
     // to this strategy class on the HEAP event list. Then, the function is called at a specific simulated date.
     void schedule_function(void (*func), const DateRules& dateRules, const TimeRules& timeRules);
+
+    // GTest friend funcs
+    FRIEND_TEST(StrategyFixture, schedule_functions);
 };
 
 // Returns an iterator pointing to the first date on the event HEAP which is greater than the specified date. Will be
