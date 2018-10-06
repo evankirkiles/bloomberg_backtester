@@ -17,18 +17,25 @@ BaseStrategy::BaseStrategy(std::vector<std::string> p_symbol_list, unsigned int 
             current_time(p_start),
             end_date(p_end),
             date_rules(p_start, p_end),
-            time_rules(),
-            data_manager(std::make_unique<HistoricalDataManager>(&current_time)) {}
+            time_rules() {}
 
 // Builds the Strategy object with the given initial capital and start and end. To reformat the strategy,
 // probably should just reconstruct it.
 Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
                 unsigned int p_initial_capital, const BloombergLP::blpapi::Datetime &p_start_date,
                    const BloombergLP::blpapi::Datetime &p_end_date) :
-           BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date) { }
+           BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
+            data(std::make_unique<HistoricalDataManager>(&current_time)) {
+
+    // Make sure to fill the HEAP event list with the MarketEvents.
+    data->fillHistory(symbol_list, start_date, end_date, &heap_eventlist);
+}
 
 // Runs the strategy by iterating through the HEAP event list until it is empty
 void Strategy::run() {  }
+
+// Scheduled function check
+void Strategy::check() { std::cout << "CHECKED" << std::endl; }
 
 // Inherited function which schedules an event onto the event HEAP. It provides a reference to the strategy's function
 // and the current class passing it in.

@@ -28,7 +28,7 @@ public:
 // Makes sure the Data Retriever opens a session with Bloomberg upon construction
 TEST(DataRetrieverFixture, opens_session) { // NOLINT(cert-err58-cpp)
     // Build a DataRetrieverFixture and make sure session does not throw an error
-    try { DataRetriever dr("HISTORICAL_DATA");
+    try { HistoricalDataRetriever dr("HISTORICAL_DATA");
     } catch (std::runtime_error const & err) {
         FAIL() << "Session failed to start.";
     }
@@ -37,7 +37,7 @@ TEST(DataRetrieverFixture, opens_session) { // NOLINT(cert-err58-cpp)
 // Tests the Data Retriever's data access capabilities
 TEST(DataRetrieverFixture, pulls_data) { // NOLINT(cert-err58-cpp)
     // Build a DataRetrieverFixture
-    DataRetriever dr("HISTORICAL_DATA");
+    HistoricalDataRetriever dr("HISTORICAL_DATA");
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> data = dr.pullHistoricalData(
             {"IBM US EQUITY"},
             BloombergLP::blpapi::Datetime(2005, 3, 3, 0, 0, 0, 0),

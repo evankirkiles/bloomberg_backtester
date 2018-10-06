@@ -36,15 +36,15 @@ struct SymbolHistoricalData {
 // modified to support subscriptions, but at the moment is only needed for backtesting and thus
 // only gets historical data.
 //
-class DataRetriever {
+class HistoricalDataRetriever {
 public:
     // Constructor which initializes the session connection to Bloomberg API through which data will be requested.
-    // The type parameter works to specify a type of data which will be handled by the instance of the DataRetriever.
+    // The type parameter works to specify a type of data which will be handled by the instance of the HistoricalDataRetriever.
     // Options currently include HISTORICAL_DATA, but will eventually support INTRADAY_DATA and REALTIME_DATA.
-    explicit DataRetriever(const std::string& type);
+    explicit HistoricalDataRetriever(const std::string& type);
 
     // On destruction, close the session before releasing the object
-    ~DataRetriever();
+    ~HistoricalDataRetriever();
 
     // Pulls data for the given stocks at the
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> pullHistoricalData(

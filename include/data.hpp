@@ -19,7 +19,7 @@ public:
     explicit DataManager(BloombergLP::blpapi::Datetime* p_currentTime) : currentTime(p_currentTime) {}
 
     // Pulls history for N time units back from the current date (given to the function) given the parameters.
-    // Simply passes a request to a DataRetriever and takes the new data down from Bloomberg.
+    // Simply passes a request to a HistoricalDataRetriever and takes the new data down from Bloomberg.
     virtual std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> history(
             const std::vector<std::string>& symbols,
             const std::vector<std::string>& fields,
@@ -53,7 +53,7 @@ public:
             const std::string& frequency) override;
 private:
     // The Data Retriever module itself used by the history and buildHistory functions to query Bloomberg API
-    HistoricalDataHandler dr;
+    HistoricalDataRetriever dr;
 };
 
 #endif //BACKTESTER_DATA_HPP

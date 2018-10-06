@@ -5,12 +5,12 @@
 // Include header
 #include "dataretriever.hpp"
 
-// Constructor to build an instance of the DataRetriever for the given type of data.
+// Constructor to build an instance of the HistoricalDataRetriever for the given type of data.
 //
 // @param type             The type of data which will be used for this data retriever.
 //                          -> HISTORICAL_DATA, INTRADAY_DATA, REALTIME_DATA
 //
-DataRetriever::DataRetriever(const std::string &p_type) : type(p_type) {
+HistoricalDataRetriever::HistoricalDataRetriever(const std::string &p_type) : type(p_type) {
     // First initialize the session options with global session run settings.
     BloombergLP::blpapi::SessionOptions session_options;
     session_options.setServerHost(bloomberg_session::HOST);
@@ -24,7 +24,7 @@ DataRetriever::DataRetriever(const std::string &p_type) : type(p_type) {
 }
 
 // Destructor which simply closes the connection to the Bloomberg API
-DataRetriever::~DataRetriever() { session->stop(); }
+HistoricalDataRetriever::~HistoricalDataRetriever() { session->stop(); }
 
 // Generates a request to Bloomberg for the data specified in the parameters. This function is only for
 // historical data retrievers, it should NOT be run on subscription-based or intra-day retrievers.
@@ -36,13 +36,13 @@ DataRetriever::~DataRetriever() { session->stop(); }
 // @param frequency        The frequency of the data, ex. "DAILY", "MONTHLY"
 //
 std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>>
-DataRetriever::pullHistoricalData(const std::vector<std::string> &securities,
+HistoricalDataRetriever::pullHistoricalData(const std::vector<std::string> &securities,
                                                                const BloombergLP::blpapi::Datetime& start_date,
                                                                const BloombergLP::blpapi::Datetime& end_date,
                                                                const std::vector<std::string> &fields,
                                                                const std::string &frequency) {
 
-    // Ensure that this instance of DataRetriever is able to take historical data
+    // Ensure that this instance of HistoricalDataRetriever is able to take historical data
     if (type != "HISTORICAL_DATA") { throw std::runtime_error("Not historical data retriever!"); }
 
     // First open the pipeline for getting historical data by using the Reference Data market service.

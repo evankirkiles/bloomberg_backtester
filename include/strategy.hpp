@@ -55,7 +55,8 @@ protected:
     std::list<std::unique_ptr<events::Event>> heap_eventlist;
 
     // Other custom algorithmic components
-    std::unique_ptr<DataManager> data_manager;
+
+    // Each different type of strategy requires its OWN type of datahandler, so it is not initialized here
     // ExecutionHandler execution_handler;
 };
 
@@ -71,12 +72,19 @@ public:
 
     void run();
 
+    // Functions to schedule
+    void check();
+
     // Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference
     // to this strategy class on the HEAP event list. Then, the function is called at a specific simulated date.
     void schedule_function(void (*func), const DateRules& dateRules, const TimeRules& timeRules);
 
     // GTest friend funcs
     FRIEND_TEST(StrategyFixture, schedule_functions);
+
+private:
+    // The Data Manager for a Historical Strategy
+    std::unique_ptr<HistoricalDataManager> data;
 };
 
 // Returns an iterator pointing to the first date on the event HEAP which is greater than the specified date. Will be

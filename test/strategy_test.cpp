@@ -31,6 +31,6 @@ TEST(StrategyFixture, schedule_functions) { // NOLINT(cert-err58-cpp)
             BloombergLP::blpapi::Datetime(2004, 1, 1, 0, 0, 0),
             BloombergLP::blpapi::Datetime(2005, 1, 1, 0, 0, 0));
 
-    // Build the market events
-    strat.data_manager->strat.heap_eventlist;
+    // Schedule a function onto the heap event list
+    strat.schedule_function(&Strategy::check, );
 }
