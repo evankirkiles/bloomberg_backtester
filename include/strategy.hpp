@@ -134,14 +134,17 @@ namespace events {
 // @member instance        A reference to the strategy itself so its member function can be called
 //
     struct ScheduledEvent : public Event {
-        void (*function);
+        void Strategy::* function;
         Strategy* instance;
 
         // Print function
         void what() override;
 
         // Constructor for the ScheduledEvent
-        ScheduledEvent(void (*function), Strategy* strat, const BloombergLP::blpapi::Datetime &when);
+        ScheduledEvent(void Strategy::* function, Strategy* strat, const BloombergLP::blpapi::Datetime &when);
+
+        // Runs the scheduled event
+        void run();
     };
 
 }
