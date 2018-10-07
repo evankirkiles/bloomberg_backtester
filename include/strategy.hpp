@@ -77,7 +77,7 @@ public:
 
     // Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference
     // to this strategy class on the HEAP event list. Then, the function is called at a specific simulated date.
-    void schedule_function(void (*func), const DateRules& dateRules, const TimeRules& timeRules);
+    void schedule_function(void Strategy::* func, const DateRules& dateRules, const TimeRules& timeRules);
 
     // GTest friend funcs
     FRIEND_TEST(StrategyFixture, schedule_functions);
@@ -88,7 +88,7 @@ private:
 };
 
 // Returns an iterator pointing to the first date on the event HEAP which is greater than the specified date. Will be
-// used in scheduling functions to place the ScheduleEvents in between the MarketEvents
+// used in scheduling functions t   o place the ScheduleEvents in between the MarketEvents
 struct first_date_greater : public std::unary_function<BloombergLP::blpapi::Datetime, bool> {
     explicit first_date_greater(const BloombergLP::blpapi::Datetime& p_date) : date(p_date) {}
     const BloombergLP::blpapi::Datetime date;
@@ -125,7 +125,6 @@ struct first_date_greater : public std::unary_function<BloombergLP::blpapi::Date
 
 // Implementation of ScheduledFunction is in strategy class because needs to have a reference to Startegy object
 // and do not want circular dependencies.
-
 namespace events {
 // Scheduled Event that is placed onto the stack depending on when the algorithm has scheduled it to run. This
 // is the module that allows for functions to be run at certain times during the calendar. Rather than have a running
