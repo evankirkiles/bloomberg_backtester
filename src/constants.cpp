@@ -40,6 +40,16 @@ namespace element_names {
     const char* CODE("code");
 }
 
+// Names for data in the portfolio
+namespace portfolio_fields {
+    const char* HELD_CASH("held_cash");
+    const char* COMMISSION("commission");
+    const char* SLIPPAGE("slippage");
+    const char* TOTAL_HOLDINGS("total_holdings");
+    const char* RETURNS("returns");
+    const char* EQUITY_CURVE("equity_curve");
+}
+
 // Enums for the date rules specifying types
 namespace date_time_enums {
     const unsigned int EVERY_DAY = 0;

@@ -43,6 +43,17 @@ namespace element_names {
     extern const char* CODE;
 }
 
+// Names for data in the portfolio
+namespace portfolio_fields {
+    extern const char* HELD_CASH;
+    extern const char* COMMISSION;
+    extern const char* SLIPPAGE;
+    extern const char* TOTAL_HOLDINGS;
+    extern const char* RETURNS;
+    extern const char* EQUITY_CURVE;
+}
+
+
 // Enums for the date rules specifying types
 namespace date_time_enums {
     extern const unsigned int EVERY_DAY;

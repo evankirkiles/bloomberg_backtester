@@ -8,6 +8,7 @@
 #include "bloombergincludes.hpp"
 // Custom class includes
 #include "events.hpp"
+#include "constants.hpp"
 
 // Class for the Portfolio object which keeps track of holdings and positions for the strategy. This will
 // receive market events and fill events passed in to it by the Strategy event loop, which will be used to recalculate
@@ -31,6 +32,12 @@ public:
     void update_fill(const events::FillEvent& event);
 
 private:
+
+    // Writes the current holdings and current positions into their respective all_holdings maps
+    void push_holdings_and_positions(const BloombergLP::blpapi::Datetime& date);
+    // Calculates total holdings, returns, and equity curve
+    void calculate_returns();
+
     // Portfolio instance member functions
     std::vector<std::string> symbol_list;
     unsigned int initial_capital;
