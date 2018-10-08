@@ -28,9 +28,15 @@ public:
 TEST(StrategyFixture, schedule_functions) { // NOLINT(cert-err58-cpp)
     // Initialize a Strategy object
     Strategy strat({"IBM US EQUITY", "AAPL US EQUITY"}, 100000,
-            BloombergLP::blpapi::Datetime(2004, 1, 1, 0, 0, 0),
-            BloombergLP::blpapi::Datetime(2005, 1, 1, 0, 0, 0));
+            BloombergLP::blpapi::Datetime(2014, 1, 1, 0, 0, 0),
+            BloombergLP::blpapi::Datetime(2015, 1, 1, 0, 0, 0));
 
     // Schedule a function onto the heap event list
-    strat.schedule_function(&Strategy::check, );
+    strat.schedule_function(&Strategy::check, strat.date_rules.every_day(), TimeRules::market_open(1, 1));
+
+    // Now check if the function was successful
+    for (const auto& i : strat.heap_eventlist) {
+        // Roll through all events
+        i->concise_what();
+    }
 }

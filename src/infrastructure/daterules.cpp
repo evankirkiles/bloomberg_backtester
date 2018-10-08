@@ -52,10 +52,10 @@ BloombergLP::blpapi::Datetime TimeRules::get_time(BloombergLP::blpapi::Datetime 
     // Market open type will always be the same open time
     if (type == date_time_enums::T_MARKET_OPEN) {
         if (date_time_enums::US_MARKET_OPEN_MINUTE + minutes >= 60) {
-            date.setHours(date_time_enums::US_MARKET_OPEN_HOUR + 1);
-            date.setMinutes(date_time_enums::US_MARKET_OPEN_MINUTE + minutes - 60);
+            date.setHours(date_time_enums::US_MARKET_OPEN_HOUR + 1 + hours);
+            date.setMinutes(date_time_enums::US_MARKET_OPEN_MINUTE - 60 + minutes);
         } else {
-            date.setHours(date_time_enums::US_MARKET_OPEN_HOUR);
+            date.setHours(date_time_enums::US_MARKET_OPEN_HOUR + hours);
             date.setMinutes(date_time_enums::US_MARKET_OPEN_MINUTE + minutes);
         }
         date.setSeconds(0);
@@ -64,20 +64,20 @@ BloombergLP::blpapi::Datetime TimeRules::get_time(BloombergLP::blpapi::Datetime 
     } else {
         if (earlyClose) {
             if (date_time_enums::US_MARKET_EARLY_CLOSE_MINUTE - minutes < 0) {
-                date.setHours(date_time_enums::US_MARKET_EARLY_CLOSE_HOUR - 1);
-                date.setMinutes(date_time_enums::US_MARKET_EARLY_CLOSE_MINUTE - minutes + 60);
+                date.setHours(date_time_enums::US_MARKET_EARLY_CLOSE_HOUR - 1 - hours);
+                date.setMinutes(date_time_enums::US_MARKET_EARLY_CLOSE_MINUTE + 60 - minutes);
             } else {
-                date.setHours(date_time_enums::US_MARKET_EARLY_CLOSE_HOUR);
+                date.setHours(date_time_enums::US_MARKET_EARLY_CLOSE_HOUR - hours);
                 date.setMinutes(date_time_enums::US_MARKET_EARLY_CLOSE_MINUTE - minutes);
             }
             date.setSeconds(0);
             return date;
         } else {
             if (date_time_enums::US_MARKET_CLOSE_MINUTE - minutes < 0) {
-                date.setHours(date_time_enums::US_MARKET_CLOSE_HOUR - 1);
-                date.setMinutes(date_time_enums::US_MARKET_CLOSE_MINUTE - minutes + 60);
+                date.setHours(date_time_enums::US_MARKET_CLOSE_HOUR - 1 - hours);
+                date.setMinutes(date_time_enums::US_MARKET_CLOSE_MINUTE + 60 - minutes);
             } else {
-                date.setHours(date_time_enums::US_MARKET_CLOSE_HOUR);
+                date.setHours(date_time_enums::US_MARKET_CLOSE_HOUR - hours);
                 date.setMinutes(date_time_enums::US_MARKET_CLOSE_MINUTE - minutes);
             }
             date.setSeconds(0);
@@ -91,11 +91,11 @@ DateRules::DateRules(const BloombergLP::blpapi::Datetime &p_start_date, const Bl
                      int p_type, int p_days_offset) :
          start_date(p_start_date), end_date(p_end_date), days_offset(p_days_offset), type(p_type) {}
 // Different types of DateRules retrievers which simply change the type, for easier user use in algorithm
-DateRules DateRules::every_day() { return DateRules(start_date, end_date, 0); }
-DateRules DateRules::week_start(int days_offset) { return DateRules(start_date, end_date, 1, days_offset); }
-DateRules DateRules::week_end(int days_offset) { return DateRules(start_date, end_date, 2, days_offset); }
-DateRules DateRules::month_start(int days_offset) { return DateRules(start_date, end_date, 3, days_offset); }
-DateRules DateRules::month_end(int days_offset) { return DateRules(start_date, end_date, 4, days_offset); }
+DateRules DateRules::every_day() const { return DateRules(start_date, end_date, 0); }
+DateRules DateRules::week_start(int days_offset) const { return DateRules(start_date, end_date, 1, days_offset); }
+DateRules DateRules::week_end(int days_offset) const { return DateRules(start_date, end_date, 2, days_offset); }
+DateRules DateRules::month_start(int days_offset) const { return DateRules(start_date, end_date, 3, days_offset); }
+DateRules DateRules::month_end(int days_offset) const { return DateRules(start_date, end_date, 4, days_offset); }
 
 // Returns a vector of datetimes at which to schedule the function calls.
 std::vector<BloombergLP::blpapi::Datetime> DateRules::get_date_times(const TimeRules &time_rules) const {

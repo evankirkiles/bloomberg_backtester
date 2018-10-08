@@ -8,6 +8,9 @@
 // This file simply contains all the initializer lists for each Event object
 namespace events {
 
+// Concise what function which prints the type and datetime only of an event
+void Event::concise_what() { std::cout << "Date: " << datetime << ", Type: " << type << std::endl; }
+
 // Market Event initializer list
 MarketEvent::MarketEvent(const std::vector<std::string> &p_symbols,
                          const std::unordered_map<std::string, double> &p_data,

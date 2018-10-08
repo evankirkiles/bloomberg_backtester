@@ -44,11 +44,11 @@ private:
 // builds the date rules, but to receive specific Datetimes needs to be given a time rule.
 class DateRules {
 public:
-    DateRules every_day();
-    DateRules week_start(int days_offset = 0);
-    DateRules week_end(int days_offset = 0);
-    DateRules month_start(int days_offset = 0);
-    DateRules month_end(int days_offset = 0);
+    DateRules every_day() const;
+    DateRules week_start(int days_offset = 0) const;
+    DateRules week_end(int days_offset = 0) const;
+    DateRules month_start(int days_offset = 0) const;
+    DateRules month_end(int days_offset = 0) const;
 
     // Builds a date rules object with the start and end date of strategies to enable scheduling. All date rules
     // objects will be derived from this one to preserve start and end date, but this should never be called by user.

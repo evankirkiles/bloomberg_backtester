@@ -9,8 +9,10 @@ set(CMAKE_INCLUDE_CURRENT_DIR YES)
 
 # Bloomberg library includes
 include_directories("C:\\blp\\C++\\include")
-# Also include project level directories0000
+# Also include project level directories
 include_directories(src include test)
+# Also, because using Google Test for friend tests, include its local includes
+include_directories(lib/googletest/include lib/googletest)
 add_subdirectory(include)
 add_subdirectory(test)
 
@@ -36,3 +38,6 @@ file(GLOB BLPAPI_LIBRARIES
         "C:/blp/C++/lib/*.lib")
 message(STATUS "Bloomberg Libraries: ${BLPAPI_LIBRARIES}")
 target_link_libraries(Backtester ${BLPAPI_LIBRARIES})
+
+# Link the executable to Google Test
+target_link_libraries(Backtester gtest gtest_main)

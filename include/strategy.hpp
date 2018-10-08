@@ -6,8 +6,6 @@
 #define BACKTESTER_STRATEGY_HPP
 // Bloomberg includes
 #include "bloombergincludes.hpp"
-// Include Google Test for production
-#include <gtest/gtest_prod.h>
 // Custom class includes
 #include "events.hpp"
 #include "dataretriever.hpp"
@@ -81,10 +79,10 @@ public:
 
     // Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference
     // to this strategy class on the HEAP event list. Then, the function is called at a specific simulated date.
-    void schedule_function(void Strategy::* func, const DateRules& dateRules, const TimeRules& timeRules);
+    void schedule_function(void (Strategy::*func)(), const DateRules& dateRules, const TimeRules& timeRules);
 
-    // GTest friend funcs
-    FRIEND_TEST(StrategyFixture, schedule_functions);
+    // GTest friend class
+    friend class StrategyFixture_schedule_functions_Test;
 
 private:
     // The Data Manager for a Historical Strategy
@@ -138,14 +136,14 @@ namespace events {
 // @member instance        A reference to the strategy itself so its member function can be called
 //
     struct ScheduledEvent : public Event {
-        void Strategy::* function;
+        void (Strategy::*function)();
         Strategy* instance;
 
         // Print function
         void what() override;
 
         // Constructor for the ScheduledEvent
-        ScheduledEvent(void Strategy::* function, Strategy* strat, const BloombergLP::blpapi::Datetime &when);
+        ScheduledEvent(void (Strategy::*func)(), Strategy* strat, const BloombergLP::blpapi::Datetime &when);
 
         // Runs the scheduled event
         void run();

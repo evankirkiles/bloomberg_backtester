@@ -1,5 +1,3 @@
-#include <utility>
-
 //
 // Created by Evan Kirkiles on 9/27/2018.
 //
@@ -87,7 +85,7 @@ void Strategy::check() { std::cout << "CHECKED" << std::endl; }
 
 // Inherited function which schedules an event onto the event HEAP. It provides a reference to the strategy's function
 // and the current class passing it in.
-void Strategy::schedule_function(void Strategy::* func, const DateRules& dateRules, const TimeRules& timeRules) {
+void Strategy::schedule_function(void (Strategy::*func)(), const DateRules& dateRules, const TimeRules& timeRules) {
     // Get the datetimes at which the functions should be scheduled
     std::vector<BloombergLP::blpapi::Datetime> dates = dateRules.get_date_times(timeRules);
     for (const auto& i : dates) {
@@ -103,10 +101,10 @@ void Strategy::schedule_function(void Strategy::* func, const DateRules& dateRul
 // Event initialization for ScheduledEvent
 namespace events {
 // Scheduled Event initializer list
-ScheduledEvent::ScheduledEvent(void Strategy::* p_function, Strategy* p_strat,
+ScheduledEvent::ScheduledEvent(void (Strategy::*p_func)(), Strategy* p_strat,
                                const BloombergLP::blpapi::Datetime &p_when) :
         Event("SCHEDULED", p_when),
-        function(p_function),
+        function(p_func),
         instance(p_strat) {}
 // Print function for Scheduled Event
 void ScheduledEvent::what() {

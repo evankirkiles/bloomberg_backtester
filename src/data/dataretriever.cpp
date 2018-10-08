@@ -109,6 +109,11 @@ bool HistoricalDataHandler::processResponseEvent(const BloombergLP::blpapi::Even
                         BloombergLP::blpapi::Element element = field_data.getValueAsElement(static_cast<size_t>(i));
                         BloombergLP::blpapi::Datetime date = element.getElementAsDatetime(element_names::DATE);
 
+                        // Set the times on the dates to be after the market closes (5:00 P.M. suffices)
+                        date.setHours(17);
+                        date.setMinutes(0);
+                        date.setSeconds(0);
+
                         // Put the information into the SymbolHistoricalData
                         for (int j = 1; j < element.numElements(); ++j) {
                             // I haven't seen any documentation for missing values, which could potentially throw

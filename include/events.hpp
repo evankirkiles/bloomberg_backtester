@@ -26,6 +26,8 @@ struct Event {
     const std::string type;
     const BloombergLP::blpapi::Datetime datetime = BloombergLP::blpapi::Datetime(1970, 1, 1, 0, 0, 0);
 
+    // Concise one line print which tells what type the event is and its date
+    void concise_what();
     // Print function to be implemented by the events themselves for debugging purposes
     virtual void what() = 0;
     // Default destructor to allow for polymorphism (so we can downcast sub event types from pointers to Events)
