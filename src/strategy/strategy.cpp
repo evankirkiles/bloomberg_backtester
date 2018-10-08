@@ -32,7 +32,55 @@ Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
 }
 
 // Runs the strategy by iterating through the HEAP event list until it is empty
-void Strategy::run() {  }
+void Strategy::run() {
+    // Place the iterator onto the heap eventlist
+    currentEvent = heap_eventlist.begin();
+
+    // Use a boolean value to allow for exiting after a loop
+    while(running && (currentEvent != heap_eventlist.end() || !stack_eventqueue.empty())) {
+        std::unique_ptr<events::Event> event;
+        // If the STACK is empty, take in events on the HEAP and process them, otherwise go through
+        // the events on the STACK until it is empty. STACk always starts out empty.
+        if (!stack_eventqueue.empty()) {
+            // Get the first event
+            event = std::move(stack_eventqueue.front());
+            stack_eventqueue.pop();
+        } else {
+            // Iterate the currentEvent forwards and retrieve its object
+            event = std::move(*currentEvent);
+            currentEvent++;
+        }
+
+        // Set the current time to the datetime of the event
+        current_time = event->datetime;
+        // Now downcast the event and perform whatever function it requires
+        if (event->type == "MARKET") {
+            events::MarketEvent event_market = *static_cast<events::MarketEvent *>(event.release());
+
+            // HANDLE MARKET EVENT HERE
+
+        } else if (event->type == "SIGNAL") {
+            events::SignalEvent event_signal = *static_cast<events::SignalEvent *>(event.release());
+
+            // HANDLE SIGNAL EVENT HERE
+
+        } else if (event->type == "ORDER") {
+            events::OrderEvent event_order = *static_cast<events::OrderEvent *>(event.release());
+
+            // HANDLE ORDER EVENT HERE
+
+        } else if (event->type == "FILL") {
+            events::FillEvent event_fill = *static_cast<events::FillEvent *>(event.release());
+
+            // HANDLE FILL EVENT HERE
+
+        } else if (event->type == "SCHEDULED") {
+            events::ScheduledEvent event_scheduled = *static_cast<events::ScheduledEvent *>(event.release());
+            // Run the function referenced to in the schedule event
+            event_scheduled.run();
+        }
+    }
+}
 
 // Scheduled function check
 void Strategy::check() { std::cout << "CHECKED" << std::endl; }
@@ -55,7 +103,7 @@ void Strategy::schedule_function(void Strategy::* func, const DateRules& dateRul
 // Event initialization for ScheduledEvent
 namespace events {
 // Scheduled Event initializer list
-ScheduledEvent::ScheduledEvent(void Strategy::* function, Strategy* p_strat,
+ScheduledEvent::ScheduledEvent(void Strategy::* p_function, Strategy* p_strat,
                                const BloombergLP::blpapi::Datetime &p_when) :
         Event("SCHEDULED", p_when),
         function(p_function),

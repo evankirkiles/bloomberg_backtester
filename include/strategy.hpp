@@ -45,6 +45,10 @@ protected:
     const BloombergLP::blpapi::Datetime start_date, end_date;
     BloombergLP::blpapi::Datetime current_time;
 
+    // Run function members, for breaking loop and keeping track of current Event position
+    bool running = false;
+    std::list<std::unique_ptr<events::Event>>::iterator currentEvent;
+
     // Instances of the daterules for scheduling functions
     const DateRules date_rules;
     const TimeRules time_rules;
