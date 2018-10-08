@@ -10,6 +10,7 @@
 #include "events.hpp"
 #include "dataretriever.hpp"
 #include "data.hpp"
+#include "portfolio.hpp"
 
 // Base Strategy class to be inherited by all strategies.
 //
@@ -57,7 +58,7 @@ protected:
     std::list<std::unique_ptr<events::Event>> heap_eventlist;
 
     // Other custom algorithmic components
-
+    Portfolio portfolio;
     // Each different type of strategy requires its OWN type of datahandler, so it is not initialized here
     // ExecutionHandler execution_handler;
 };

@@ -15,7 +15,8 @@ BaseStrategy::BaseStrategy(std::vector<std::string> p_symbol_list, unsigned int 
             current_time(p_start),
             end_date(p_end),
             date_rules(p_start, p_end),
-            time_rules() {}
+            time_rules(),
+            portfolio(p_symbol_list, p_initial_capital, p_start) {}
 
 // Builds the Strategy object with the given initial capital and start and end. To reformat the strategy,
 // probably should just reconstruct it.
@@ -55,8 +56,8 @@ void Strategy::run() {
         // Now downcast the event and perform whatever function it requires
         if (event->type == "MARKET") {
             events::MarketEvent event_market = *dynamic_cast<events::MarketEvent *>(event.release());
-
-            // HANDLE MARKET EVENT HERE
+            // Pass the market event into the portfolio to update holdings
+            portfolio.update_market(event_market);
 
         } else if (event->type == "SIGNAL") {
             events::SignalEvent event_signal = *dynamic_cast<events::SignalEvent *>(event.release());
@@ -70,8 +71,8 @@ void Strategy::run() {
 
         } else if (event->type == "FILL") {
             events::FillEvent event_fill = *dynamic_cast<events::FillEvent *>(event.release());
-
-            // HANDLE FILL EVENT HERE
+            // Pass the fill event into the portfolio to update holdings
+            portfolio.update_fill(event_fill);
 
         } else if (event->type == "SCHEDULED") {
             events::ScheduledEvent event_scheduled = *dynamic_cast<events::ScheduledEvent *>(event.release());

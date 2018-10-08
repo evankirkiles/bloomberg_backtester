@@ -9,7 +9,9 @@ set(BACKTEST_HEADERS
         data.hpp
         daterules.hpp
         events.hpp
-        strategy.hpp)
+        strategy.hpp
+        portfolio.hpp
+        execution.hpp)
 set(BACKTEST_SRCS
         ../src/data/dataretriever.cpp
         ../src/constants.cpp
@@ -17,6 +19,8 @@ set(BACKTEST_SRCS
         ../src/data/data.cpp
         ../src/infrastructure/daterules.cpp
         ../src/strategy/strategy.cpp
-        ../src/infrastructure/events.cpp)
+        ../src/infrastructure/events.cpp
+        ../src/infrastructure/portfolio.cpp
+        ../src/infrastructure/execution.cpp)
 
 add_library(backtester_libs ${BACKTEST_HEADERS} ${BACKTEST_SRCS})

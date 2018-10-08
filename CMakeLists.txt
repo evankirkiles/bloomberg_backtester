@@ -24,6 +24,8 @@ set(BACKTEST_SRCS
         src/holidays.cpp
         src/infrastructure/events.cpp
         src/infrastructure/daterules.cpp
+        src/infrastructure/portfolio.cpp
+        src/infrastructure/execution.cpp
         src/strategy/strategy.cpp)
 
 # Build the backtester executable
