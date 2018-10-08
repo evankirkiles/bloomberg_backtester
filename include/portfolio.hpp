@@ -1,0 +1,8 @@
+//
+// Created by Evan Kirkiles on 10/8/2018.
+//
+
+#ifndef BACKTESTER_PORTFOLIO_HPP
+#define BACKTESTER_PORTFOLIO_HPP
+
+#endif //BACKTESTER_PORTFOLIO_HPP

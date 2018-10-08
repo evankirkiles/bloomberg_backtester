@@ -33,6 +33,7 @@ Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
 void Strategy::run() {
     // Place the iterator onto the heap eventlist
     currentEvent = heap_eventlist.begin();
+    running = true;
 
     // Use a boolean value to allow for exiting after a loop
     while(running && (currentEvent != heap_eventlist.end() || !stack_eventqueue.empty())) {
@@ -53,27 +54,27 @@ void Strategy::run() {
         current_time = event->datetime;
         // Now downcast the event and perform whatever function it requires
         if (event->type == "MARKET") {
-            events::MarketEvent event_market = *static_cast<events::MarketEvent *>(event.release());
+            events::MarketEvent event_market = *dynamic_cast<events::MarketEvent *>(event.release());
 
             // HANDLE MARKET EVENT HERE
 
         } else if (event->type == "SIGNAL") {
-            events::SignalEvent event_signal = *static_cast<events::SignalEvent *>(event.release());
+            events::SignalEvent event_signal = *dynamic_cast<events::SignalEvent *>(event.release());
 
             // HANDLE SIGNAL EVENT HERE
 
         } else if (event->type == "ORDER") {
-            events::OrderEvent event_order = *static_cast<events::OrderEvent *>(event.release());
+            events::OrderEvent event_order = *dynamic_cast<events::OrderEvent *>(event.release());
 
             // HANDLE ORDER EVENT HERE
 
         } else if (event->type == "FILL") {
-            events::FillEvent event_fill = *static_cast<events::FillEvent *>(event.release());
+            events::FillEvent event_fill = *dynamic_cast<events::FillEvent *>(event.release());
 
             // HANDLE FILL EVENT HERE
 
         } else if (event->type == "SCHEDULED") {
-            events::ScheduledEvent event_scheduled = *static_cast<events::ScheduledEvent *>(event.release());
+            events::ScheduledEvent event_scheduled = *dynamic_cast<events::ScheduledEvent *>(event.release());
             // Run the function referenced to in the schedule event
             event_scheduled.run();
         }
@@ -81,7 +82,7 @@ void Strategy::run() {
 }
 
 // Scheduled function check
-void Strategy::check() { std::cout << "CHECKED" << std::endl; }
+void Strategy::check() { std::cout << "Function ran on " << current_time << std::endl; }
 
 // Inherited function which schedules an event onto the event HEAP. It provides a reference to the strategy's function
 // and the current class passing it in.

@@ -35,8 +35,22 @@ TEST(StrategyFixture, schedule_functions) { // NOLINT(cert-err58-cpp)
     strat.schedule_function(&Strategy::check, strat.date_rules.every_day(), TimeRules::market_open(1, 1));
 
     // Now check if the function was successful
-    for (const auto& i : strat.heap_eventlist) {
-        // Roll through all events
-        i->concise_what();
-    }
+//    for (const auto& i : strat.heap_eventlist) {
+//        // Roll through all events
+//        i->concise_what();
+//    }
+}
+
+// Checks the run function of a strategy with a placeholder check function scheduled every week open
+TEST(StrategyFixture, run) { // NOLINT(cert-err58-cpp)
+    // Initialize a Strategy object
+    Strategy strat({"IBM US EQUITY", "AAPL US EQUITY"}, 100000,
+                   BloombergLP::blpapi::Datetime(2014, 1, 1, 0, 0, 0),
+                   BloombergLP::blpapi::Datetime(2015, 1, 1, 0, 0, 0));
+
+    // Schedule a function onto the heap event list
+    strat.schedule_function(&Strategy::check, strat.date_rules.every_day(), TimeRules::market_open(1, 1));
+
+    // Run the function, which should print out "Function ran on DATE" several times
+    EXPECT_NO_THROW(strat.run()); // NOLINT(cppcoreguidelines-avoid-goto)
 }

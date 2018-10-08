@@ -72,7 +72,7 @@ public:
             const BloombergLP::blpapi::Datetime& start_date,
             const BloombergLP::blpapi::Datetime& end_date);
 
-    void run();
+    void run() override;
 
     // Functions to schedule
     void check();
@@ -83,6 +83,7 @@ public:
 
     // GTest friend class
     friend class StrategyFixture_schedule_functions_Test;
+    friend class StrategyFixture_run_Test;
 
 private:
     // The Data Manager for a Historical Strategy
