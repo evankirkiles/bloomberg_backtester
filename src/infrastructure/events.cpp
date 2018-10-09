@@ -39,8 +39,8 @@ void SignalEvent::what() {
 }
 
 // Order Event initializer list
-OrderEvent::OrderEvent(const std::string &p_symbol, int p_quantity) :
-        Event("ORDER", BloombergLP::blpapi::Datetime(1970, 1, 1, 0, 0, 0, 0)),
+OrderEvent::OrderEvent(const std::string &p_symbol, int p_quantity, const BloombergLP::blpapi::Datetime& when) :
+        Event("ORDER", when),
         symbol(p_symbol),
         quantity(p_quantity) {}
 
@@ -52,8 +52,8 @@ void OrderEvent::what() {
 
 // Fill Event initializer list
 FillEvent::FillEvent(const std::string &p_symbol, int p_quantity, double p_cost, double p_slippage,
-                     double p_commission) :
-        Event("FILL", BloombergLP::blpapi::Datetime(1970, 1, 1, 0, 0, 0, 0)),
+                     double p_commission, const BloombergLP::blpapi::Datetime& when) :
+        Event("FILL", when),
         symbol(p_symbol),
         quantity(p_quantity),
         cost(p_cost),

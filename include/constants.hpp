@@ -74,4 +74,10 @@ namespace date_time_enums {
     extern const unsigned int US_MARKET_EARLY_CLOSE_MINUTE;
 }
 
+// Simulation-related variables
+namespace simulation {
+    extern const double SLIPPAGE_LN_MEAN;
+    extern const double SLIPPAGE_LN_SD;
+}
+
 #endif //BACKTESTER_CONSTANTS_HPP

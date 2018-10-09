@@ -11,6 +11,7 @@
 #include "dataretriever.hpp"
 #include "data.hpp"
 #include "portfolio.hpp"
+#include "execution.hpp"
 
 // Base Strategy class to be inherited by all strategies.
 //
@@ -59,8 +60,6 @@ protected:
 
     // Other custom algorithmic components
     Portfolio portfolio;
-    // Each different type of strategy requires its OWN type of datahandler, so it is not initialized here
-    // ExecutionHandler execution_handler;
 };
 
 
@@ -88,7 +87,9 @@ public:
 
 private:
     // The Data Manager for a Historical Strategy
-    std::unique_ptr<HistoricalDataManager> data;
+    std::shared_ptr<HistoricalDataManager> data;
+    // Execution Handler to manage signal and order events
+    ExecutionHandler execution_handler;
 };
 
 // Returns an iterator pointing to the first date on the event HEAP which is greater than the specified date. Will be

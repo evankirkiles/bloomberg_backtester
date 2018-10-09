@@ -92,7 +92,7 @@ struct OrderEvent : public Event {
     void what();
 
     // Constructor for the OrderEvent
-    OrderEvent(const std::string& symbol, int quantity);
+    OrderEvent(const std::string& symbol, int quantity, const BloombergLP::blpapi::Datetime& when);
 };
 
 // FillEvent which is produced upon a successful OrderEvent. All slippage and risk management will have been handled
@@ -113,7 +113,8 @@ struct FillEvent : public Event {
     void what();
 
     // Constructor for the FillEvent
-    FillEvent(const std::string &symbol, int quantity, double cost, double slippage, double commission);
+    FillEvent(const std::string &symbol, int quantity, double cost, double slippage, double commission,
+            const BloombergLP::blpapi::Datetime& when);
 };
 
 }

@@ -10,6 +10,7 @@
 #include "events.hpp"
 #include "data.hpp"
 #include "portfolio.hpp"
+#include "slippage.hpp"
 
 // Class containing the execution handler which performs signal handling and order filling. All simulated
 // slippage, commission fees, and other such risks take place here. Signal events come in specifying a percent
@@ -19,7 +20,7 @@ class ExecutionHandler {
 public:
     // Constructor builds the execution handler with data handler, portfolio, and event list references.
     ExecutionHandler(std::queue<std::unique_ptr<events::Event>>* stack, std::list<std::unique_ptr<events::Event>>* heap,
-            DataManager* data_manager, Portfolio* portfolio);
+            std::shared_ptr<DataManager> data_manager, Portfolio* portfolio);
 
     // Takes in a Signal Event and converts it into an order based on the portfolio holdings, slippage, and commission
     void process_signal(const events::SignalEvent& event);
@@ -36,7 +37,7 @@ private:
     std::queue<std::unique_ptr<events::Event>>* stack_eventlist;
     std::list<std::unique_ptr<events::Event>>* heap_eventlist;
     // Other references needed for data retrieval and portfolio fitting
-    DataManager* data_manager;
+    std::shared_ptr<DataManager> data_manager;
     Portfolio* portfolio;
 };
 

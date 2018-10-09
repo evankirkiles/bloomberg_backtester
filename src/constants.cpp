@@ -69,3 +69,8 @@ namespace date_time_enums {
     const unsigned int US_MARKET_EARLY_CLOSE_HOUR = 13;
     const unsigned int US_MARKET_EARLY_CLOSE_MINUTE = 0;
 }
+
+namespace simulation {
+    const double SLIPPAGE_LN_MEAN(0);
+    const double SLIPPAGE_LN_SD(1);
+}

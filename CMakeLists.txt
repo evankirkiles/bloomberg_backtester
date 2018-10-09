@@ -24,7 +24,8 @@ set(BACKTEST_SRCS
         src/infrastructure/daterules.cpp
         src/infrastructure/portfolio.cpp
         src/infrastructure/execution.cpp
-        src/strategy/strategy.cpp)
+        src/strategy/strategy.cpp
+        src/simulation/slippage.cpp)
 
 # Build the backtester executable
 add_executable(Backtester

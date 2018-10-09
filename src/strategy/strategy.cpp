@@ -24,7 +24,8 @@ Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
                 unsigned int p_initial_capital, const BloombergLP::blpapi::Datetime &p_start_date,
                    const BloombergLP::blpapi::Datetime &p_end_date) :
            BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
-            data(std::make_unique<HistoricalDataManager>(&current_time)) {
+            data(std::make_shared<HistoricalDataManager>(&current_time)),
+           execution_handler(&stack_eventqueue, &heap_eventlist, data, &portfolio) {
 
     // Make sure to fill the HEAP event list with the MarketEvents.
     data->fillHistory(symbol_list, start_date, end_date, &heap_eventlist);
@@ -61,13 +62,13 @@ void Strategy::run() {
 
         } else if (event->type == "SIGNAL") {
             events::SignalEvent event_signal = *dynamic_cast<events::SignalEvent *>(event.release());
-
-            // HANDLE SIGNAL EVENT HERE
+            // Pass the signal event into the execution handler to generate orders
+            execution_handler.process_signal(event_signal);
 
         } else if (event->type == "ORDER") {
             events::OrderEvent event_order = *dynamic_cast<events::OrderEvent *>(event.release());
-
-            // HANDLE ORDER EVENT HERE
+            // Pass the order event into the executino handler to generate a fill
+            execution_handler.process_order(event_order);
 
         } else if (event->type == "FILL") {
             events::FillEvent event_fill = *dynamic_cast<events::FillEvent *>(event.release());
