@@ -31,6 +31,13 @@ public:
     // from the execution handler and contains a buy or sell quantity that has already been calculated and optimized.
     void update_fill(const events::FillEvent& event);
 
+    // The maps of the positions at their respective Bloomberg datetimes (quantities of each stock)
+    std::map<BloombergLP::blpapi::Datetime, std::unordered_map<std::string, int>> all_positions;
+    std::unordered_map<std::string, int> current_positions;
+    // The maps of the holdings at their respective Bloomberg datetimes (quantity * price of each stock)
+    std::map<BloombergLP::blpapi::Datetime, std::unordered_map<std::string, double>> all_holdings;
+    std::unordered_map<std::string, double> current_holdings;
+
 private:
 
     // Writes the current holdings and current positions into their respective all_holdings maps
@@ -43,12 +50,8 @@ private:
     unsigned int initial_capital;
     BloombergLP::blpapi::Datetime start_date;
 
-    // The maps of the positions at their respective Bloomberg datetimes (quantities of each stock)
-    std::map<BloombergLP::blpapi::Datetime, std::unordered_map<std::string, int>> all_positions;
-    std::unordered_map<std::string, int> current_positions;
-    // The maps of the holdings at their respective Bloomberg datetimes (quantity * price of each stock)
-    std::map<BloombergLP::blpapi::Datetime, std::unordered_map<std::string, double>> all_holdings;
-    std::unordered_map<std::string, double> current_holdings;
+    // Google test related friend classes
+    friend class PortfolioFixture_builds_empty_portfolio_Test;
 };
 
 #endif //BACKTESTER_PORTFOLIO_HPP

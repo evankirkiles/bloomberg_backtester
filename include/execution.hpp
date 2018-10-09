@@ -21,8 +21,23 @@ public:
     ExecutionHandler(std::queue<std::unique_ptr<events::Event>>* stack, std::list<std::unique_ptr<events::Event>>* heap,
             DataManager* data_manager, Portfolio* portfolio);
 
-    // Takes in a signal event and converts it into an order based on the portfolio holdings, slippage, and commission
+    // Takes in a Signal Event and converts it into an order based on the portfolio holdings, slippage, and commission
     void process_signal(const events::SignalEvent& event);
+    // Takes in an Order Event and converts it into a FillEvent based on fill limits (may also split it into several orders)
+    void process_order(const events::OrderEvent& event);
+
+    // Calculates the IB commission on an order based on a quantity
+    double calculate_commission(int quantity);
+    // Calculates the slippage on an order
+    double calculate_slippage(double cost);
+
+private:
+    // Pointers to the external event list stack and heap
+    std::queue<std::unique_ptr<events::Event>>* stack_eventlist;
+    std::list<std::unique_ptr<events::Event>>* heap_eventlist;
+    // Other references needed for data retrieval and portfolio fitting
+    DataManager* data_manager;
+    Portfolio* portfolio;
 };
 
 #endif //BACKTESTER_EXECUTION_HPP

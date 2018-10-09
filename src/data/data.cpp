@@ -45,10 +45,12 @@ std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> Historica
             const std::vector<std::string> &symbols, const std::vector<std::string> &fields, unsigned int timeunitsback,
             const std::string &frequency) {
 
+    // Simulate a default argument for overridden function
+    std::string freq = (frequency == "RECENT") ? "DAILY" : frequency;
     // Find the date N days back from the current dates
     BloombergLP::blpapi::Datetime beginDate = date_funcs::add_seconds(*currentTime, 24 * 60 * 60 * timeunitsback * -1);
 
     // Simply tunnels the request through to the HistoricalDataRetriever, filling in the end date as the current date of
     // the local pointer to the simulated current date.
-    return std::move(dr.pullHistoricalData(symbols, beginDate, *currentTime, fields, frequency));
+    return std::move(dr.pullHistoricalData(symbols, beginDate, *currentTime, fields, freq));
 }
