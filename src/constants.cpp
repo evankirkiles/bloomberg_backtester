@@ -48,6 +48,7 @@ namespace portfolio_fields {
     const char* TOTAL_HOLDINGS("total_holdings");
     const char* RETURNS("returns");
     const char* EQUITY_CURVE("equity_curve");
+    const char* RESERVE_CASH("reserve_cash");
 }
 
 // Enums for the date rules specifying types

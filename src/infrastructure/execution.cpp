@@ -19,7 +19,7 @@ ExecutionHandler::ExecutionHandler(std::queue<std::unique_ptr<events::Event>> *p
 
 // Takes a signal event and converts it into an Order Event. It first performs a MarketEvent to make sure the
 // portfolio holdings are as up-to-date as possible.
-void ExecutionHandler::process_signal(const events::SignalEvent &event) {
+double ExecutionHandler::process_signal(const events::SignalEvent &event) {
 
     // Before doing anything, recalculate portfolio holdings with a simulated MarketEvent
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> recentprice =
@@ -30,16 +30,25 @@ void ExecutionHandler::process_signal(const events::SignalEvent &event) {
     // Determine what percentage of the portfolio must be filled based on the totalholdings, heldcash, and current holdings.
     double current_percent = portfolio->current_holdings[event.symbol] / portfolio->current_holdings[portfolio_fields::TOTAL_HOLDINGS];
     double percent_needed = event.percentage - current_percent;
-    // Convert the percent to a quantity of the stock, chopping off any decimals
+    // Convert the percent to a quantity of the stock, chopping off any decimals so that never go over the percent we
+    // want, only up to (using floor when greater and ceil when less than 0)
+    double cost = percent_needed * portfolio->current_holdings[portfolio_fields::TOTAL_HOLDINGS];
+    double noRoundQuantity = (cost / data->second["PX_LAST"] > 0) ?
+            std::floor(percent_needed / data->second["PX_LAST"]) : std::ceil(percent_needed / data->second["PX_LAST"]);
     int quantity = (event.percentage == 0) ?
-            portfolio->current_positions[event.symbol] * -1 : static_cast<int>(percent_needed / data->second["PX_LAST"]);
+            portfolio->current_positions[event.symbol] * -1 : static_cast<int>(noRoundQuantity);
 
     // Now build the order event and place it onto the STACK to be filled as soon as possible
     stack_eventlist->emplace(std::make_unique<events::OrderEvent>(event.symbol, quantity, event.datetime));
+
+    // Reserve the amount of cash being requested by the order (if the order is to sell, then no need to reserve cash)
+    return std::max(cost, 0.0);
 }
 
 // Processes an Order Event to convert it into a fill which will be used to update the portfolio and holdings. All
 // slippage and transaction cost simulation will be performed here.
+// Returns a double which will be the amount of cash to reserve for the order, so successive orders do not all
+// think that they have the same amount of cash available.
 void ExecutionHandler::process_order(const events::OrderEvent &event) {
 
     // First, get the price of the stock (should be the most recent one as this event is run on the STACK after
@@ -49,7 +58,13 @@ void ExecutionHandler::process_order(const events::OrderEvent &event) {
     // Make sure the market can handle the order as well. Orders should not get filled if they exceed a
     // certain amount of the market volume in a stock.
     // TODO: Implement market volume limit here
+    int quantity = event.quantity;
+    double cost = quantity * price;
 
+    // Calculate slippage and transaction costs on the order cost
+    double slippage = Slippage::get_slippage(price * event.quantity);
+    double commission = TransactionCosts::get_IB_transaction_cost(event.quantity);
 
-
+    // Place a fill event onto the STACK to be performed as soon as possible
+    stack_eventlist->emplace(std::make_unique<events::FillEvent>(event.symbol, quantity, cost, slippage, commission, event.datetime));
 }

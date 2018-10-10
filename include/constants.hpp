@@ -51,6 +51,7 @@ namespace portfolio_fields {
     extern const char* TOTAL_HOLDINGS;
     extern const char* RETURNS;
     extern const char* EQUITY_CURVE;
+    extern const char* RESERVE_CASH;
 }
 
 

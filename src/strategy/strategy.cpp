@@ -50,6 +50,9 @@ void Strategy::run() {
             // Iterate the currentEvent forwards and retrieve its object
             event = std::move(*currentEvent);
             currentEvent++;
+
+            // Clear the portfolio's reserved cash every time the STACK is empty
+            portfolio.clear_reserved();
         }
 
         // Set the current time to the datetime of the event
@@ -67,8 +70,8 @@ void Strategy::run() {
 
         } else if (event->type == "ORDER") {
             events::OrderEvent event_order = *dynamic_cast<events::OrderEvent *>(event.release());
-            // Pass the order event into the executino handler to generate a fill
-            execution_handler.process_order(event_order);
+            // Pass the order event into the execution handler to generate a fill, which is processed immediately
+            portfolio.update_fill(execution_handler.process_order(event_order));
 
         } else if (event->type == "FILL") {
             events::FillEvent event_fill = *dynamic_cast<events::FillEvent *>(event.release());

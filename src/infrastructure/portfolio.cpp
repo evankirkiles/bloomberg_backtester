@@ -42,6 +42,7 @@ void Portfolio::reset_portfolio(unsigned int p_initial_capital, const BloombergL
     current_holdings[portfolio_fields::TOTAL_HOLDINGS] = initial_capital;
     current_holdings[portfolio_fields::RETURNS] = 0;
     current_holdings[portfolio_fields::EQUITY_CURVE] = 0;
+    current_holdings[portfolio_fields::RESERVE_CASH] = 0;
 
     // Write the current holdings and positions into the historical map as first entry
     push_holdings_and_positions(start_date);
@@ -67,10 +68,25 @@ void Portfolio::push_holdings_and_positions(const BloombergLP::blpapi::Datetime 
     all_positions[date] = current_positions;
 }
 
+// Moves cash from held cash into reserve cash so it cannot be accessed by order events after it is being
+// used for an order already.
+void Portfolio::reserve_cash(double to_reserve) {
+    // Subtract the cash amount from the held cash and add it to reserved
+    current_holdings[portfolio_fields::HELD_CASH] -= to_reserve;
+    current_holdings[portfolio_fields::RESERVE_CASH] += to_reserve;
+}
+
+// Clears the reserved cash stash, putting any not used back into the heldcash
+void Portfolio::clear_reserved() {
+    current_holdings[portfolio_fields::HELD_CASH] += current_holdings[portfolio_fields::RESERVE_CASH];
+    current_holdings[portfolio_fields::RESERVE_CASH] = 0;
+}
+
 // Updates total holdings with the heldcash and all the symbols
 void Portfolio::calculate_returns() {
     // Reiterate through the current holdings to get new total
-    double total_holdings = current_holdings[portfolio_fields::HELD_CASH];
+    double total_holdings = current_holdings[portfolio_fields::HELD_CASH] +
+            current_holdings[portfolio_fields::RESERVE_CASH];
     for (const auto& i : symbol_list) { total_holdings += current_holdings[i]; }
     // Calculate returns as the ratio of new holdings to previous holdings
     double returns = (total_holdings / current_holdings[portfolio_fields::TOTAL_HOLDINGS]) - 1;
@@ -94,7 +110,8 @@ void Portfolio::update_fill(const events::FillEvent &event) {
     current_holdings[event.symbol] += event.cost;
     current_holdings[portfolio_fields::COMMISSION] += event.commission;
     current_holdings[portfolio_fields::SLIPPAGE] += event.slippage;
-    current_holdings[portfolio_fields::HELD_CASH] -= event.cost + event.commission + event.slippage;
+    current_holdings[portfolio_fields::HELD_CASH] -= event.commission + event.slippage;
+    current_holdings[portfolio_fields::RESERVE_CASH] -= event.cost;
 
     // Calculate returns stream
     calculate_returns();

@@ -16,5 +16,6 @@ double Slippage::get_slippage(double order_cost) {
     std::lognormal_distribution<double> distribution (simulation::SLIPPAGE_LN_MEAN, simulation::SLIPPAGE_LN_SD);
 
     // Randomly sample a bps value from the distribution and return it as the slippage
-    return order_cost * distribution(generator) / 10000;
+    // We want the slippage to always be pessimistic, so distribution has more area above 0 (pos) or below 0 (neg)
+    return abs(static_cast<int>(order_cost)) * distribution(generator) / 10000;
 }
