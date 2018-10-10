@@ -31,12 +31,6 @@ public:
     // from the execution handler and contains a buy or sell quantity that has already been calculated and optimized.
     void update_fill(const events::FillEvent& event);
 
-    // Reserves an amount of cash in an order so that successive order events know the true value of the totalholdings
-    // but orders cannot tap into this cash which is already being used in another order.
-    void reserve_cash(double to_reserve);
-    // Clears the reserved cash at the end of a STACK list run, putting any remaining cash into the held cash
-    void clear_reserved();
-
     // The maps of the positions at their respective Bloomberg datetimes (quantities of each stock)
     std::map<BloombergLP::blpapi::Datetime, std::unordered_map<std::string, int>> all_positions;
     std::unordered_map<std::string, int> current_positions;

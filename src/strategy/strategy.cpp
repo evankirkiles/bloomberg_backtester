@@ -66,12 +66,13 @@ void Strategy::run() {
         } else if (event->type == "SIGNAL") {
             events::SignalEvent event_signal = *dynamic_cast<events::SignalEvent *>(event.release());
             // Pass the signal event into the execution handler to generate orders
-            execution_handler.process_signal(event_signal);
+            // Reserve however much cash will be used by the buy as well
+            portfolio.reserve_cash(execution_handler.process_signal(event_signal));
 
         } else if (event->type == "ORDER") {
             events::OrderEvent event_order = *dynamic_cast<events::OrderEvent *>(event.release());
-            // Pass the order event into the execution handler to generate a fill, which is processed immediately
-            portfolio.update_fill(execution_handler.process_order(event_order));
+            // Pass the order event into the execution handler to generate a fill
+            execution_handler.process_order(event_order);
 
         } else if (event->type == "FILL") {
             events::FillEvent event_fill = *dynamic_cast<events::FillEvent *>(event.release());

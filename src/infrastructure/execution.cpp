@@ -40,9 +40,6 @@ double ExecutionHandler::process_signal(const events::SignalEvent &event) {
 
     // Now build the order event and place it onto the STACK to be filled as soon as possible
     stack_eventlist->emplace(std::make_unique<events::OrderEvent>(event.symbol, quantity, event.datetime));
-
-    // Reserve the amount of cash being requested by the order (if the order is to sell, then no need to reserve cash)
-    return std::max(cost, 0.0);
 }
 
 // Processes an Order Event to convert it into a fill which will be used to update the portfolio and holdings. All
