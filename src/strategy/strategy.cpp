@@ -18,6 +18,11 @@ BaseStrategy::BaseStrategy(std::vector<std::string> p_symbol_list, unsigned int 
             time_rules(),
             portfolio(p_symbol_list, p_initial_capital, p_start) {}
 
+// Orders stocks up to the target percentage, simply by converting the params into signal events
+void BaseStrategy::order_target_percent(const std::string &symbol, double percent) {
+    stack_eventqueue.emplace(std::make_unique<events::SignalEvent>(symbol, percent, current_time));
+}
+
 // Builds the Strategy object with the given initial capital and start and end. To reformat the strategy,
 // probably should just reconstruct it.
 Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
@@ -50,9 +55,6 @@ void Strategy::run() {
             // Iterate the currentEvent forwards and retrieve its object
             event = std::move(*currentEvent);
             currentEvent++;
-
-            // Clear the portfolio's reserved cash every time the STACK is empty
-            portfolio.clear_reserved();
         }
 
         // Set the current time to the datetime of the event
@@ -66,8 +68,7 @@ void Strategy::run() {
         } else if (event->type == "SIGNAL") {
             events::SignalEvent event_signal = *dynamic_cast<events::SignalEvent *>(event.release());
             // Pass the signal event into the execution handler to generate orders
-            // Reserve however much cash will be used by the buy as well
-            portfolio.reserve_cash(execution_handler.process_signal(event_signal));
+            execution_handler.process_signal(event_signal);
 
         } else if (event->type == "ORDER") {
             events::OrderEvent event_order = *dynamic_cast<events::OrderEvent *>(event.release());

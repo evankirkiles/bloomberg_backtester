@@ -35,8 +35,13 @@ public:
                 const BloombergLP::blpapi::Datetime& end,
                 const std::string& type = "HISTORICAL DATA");
 
+    // Function to order a target percentage of stocks
+    void order_target_percent(const std::string& symbol, double percent);
+
+    // TODO: Implement a mass order, which can order several stocks at once
+
     // Public portfolio so it can be accessed by graphing components
-    // Portfolio portfolio;
+    Portfolio portfolio;
 
     // Runs the strategy itself, should be called on a new thread
     virtual void run()=0;
@@ -57,9 +62,6 @@ protected:
     std::queue<std::unique_ptr<events::Event>> stack_eventqueue;
     // HEAP event list, to be run in order and simulate a moving calendar
     std::list<std::unique_ptr<events::Event>> heap_eventlist;
-
-    // Other custom algorithmic components
-    Portfolio portfolio;
 };
 
 
