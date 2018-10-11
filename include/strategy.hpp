@@ -38,8 +38,6 @@ public:
     // Function to order a target percentage of stocks
     void order_target_percent(const std::string& symbol, double percent);
 
-    // TODO: Implement a mass order, which can order several stocks at once
-
     // Public portfolio so it can be accessed by graphing components
     Portfolio portfolio;
 

@@ -13,8 +13,9 @@ include_directories("C:\\blp\\C++\\include")
 include_directories(src include test)
 add_subdirectory(include)
 add_subdirectory(test)
+add_subdirectory(src/strategy/custom)
 
-# Initialize project sources here\
+# Initialize project sources here
 set(BACKTEST_SRCS
         src/data/dataretriever.cpp
         src/data/data.cpp
@@ -28,12 +29,18 @@ set(BACKTEST_SRCS
         src/simulation/slippage.cpp
         src/simulation/transactioncosts.cpp)
 
+# Initialize custom algorithms here
+set(ALGOS
+        src/strategy/custom/basic_algo.cpp)
+
 # Build the backtester executable
 add_executable(Backtester
         main.cpp
-        ${BACKTEST_SRCS})
+        ${BACKTEST_SRCS}
+        ${ALGOS})
 
 target_link_libraries(backtester_libs)
+target_link_libraries(strategy_files)
 
 # Link the executable to the Bloomberg libraries
 file(GLOB BLPAPI_LIBRARIES

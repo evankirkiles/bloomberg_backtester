@@ -54,3 +54,5 @@ TEST(StrategyFixture, run) { // NOLINT(cert-err58-cpp)
     // Run the function, which should print out "Function ran on DATE" several times
     EXPECT_NO_THROW(strat.run()); // NOLINT(cppcoreguidelines-avoid-goto)
 }
+
+// Checks
