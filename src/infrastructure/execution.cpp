@@ -34,7 +34,7 @@ double ExecutionHandler::process_signal(const events::SignalEvent &event) {
     // want, only up to (using floor when greater and ceil when less than 0)
     double cost = percent_needed * portfolio->current_holdings[portfolio_fields::TOTAL_HOLDINGS];
     double noRoundQuantity = (cost / data->second["PX_LAST"] > 0) ?
-            std::floor(percent_needed / data->second["PX_LAST"]) : std::ceil(percent_needed / data->second["PX_LAST"]);
+            std::floor(cost / data->second["PX_LAST"]) : std::ceil(cost / data->second["PX_LAST"]);
     int quantity = (event.percentage == 0) ?
             portfolio->current_positions[event.symbol] * -1 : static_cast<int>(noRoundQuantity);
 

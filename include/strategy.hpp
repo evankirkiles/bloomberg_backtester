@@ -43,6 +43,10 @@ public:
 
     // Runs the strategy itself, should be called on a new thread
     virtual void run()=0;
+
+    // Instances of the daterules for scheduling functions
+    const DateRules date_rules;
+    const TimeRules time_rules;
 protected:
     const unsigned int initial_capital;
     const BloombergLP::blpapi::Datetime start_date, end_date;
@@ -51,10 +55,6 @@ protected:
     // Run function members, for breaking loop and keeping track of current Event position
     bool running = false;
     std::list<std::unique_ptr<events::Event>>::iterator currentEvent;
-
-    // Instances of the daterules for scheduling functions
-    const DateRules date_rules;
-    const TimeRules time_rules;
 
     // STACK event queue, who must be empty for the HEAP event list to continue to run
     std::queue<std::unique_ptr<events::Event>> stack_eventqueue;
@@ -65,7 +65,6 @@ protected:
 
 // The actual strategy class which contains the logic for the strategy. It inherits from BaseStrategy so that the
 // user does not have access to the complete back end code behind the functioning and so cannot mess much up.
-template<class StratTemplate>
 class Strategy : public BaseStrategy {
 public:
     Strategy(const std::vector<std::string>& symbol_list,
@@ -81,16 +80,7 @@ public:
     // NOTE: Implemented in header to use StratTemplate
     // Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference
     // to this strategy class on the HEAP event list. Then, the function is called at a specific simulated date.
-    void schedule_function(void (StratTemplate::*func)(), const DateRules& dateRules, const TimeRules& timeRules) {
-        // Get the datetimes at which the functions should be scheduled
-        std::vector<BloombergLP::blpapi::Datetime> dates = dateRules.get_date_times(timeRules);
-        for (const auto& i : dates) {
-            // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
-            auto toInsertBefore = std::find_if(heap_eventlist.begin(), heap_eventlist.end(), first_date_greater(i));
-            // If no object is found with a later date, the object is put on the end of the heap list
-            heap_eventlist.insert(toInsertBefore, std::make_unique<events::ScheduledEvent>(func, this, i));
-        }
-    }
+    void schedule_function(std::function<void(Strategy*)> func, const DateRules& dateRules, const TimeRules& timeRules);
 
     // GTest friend class
     friend class StrategyFixture_schedule_functions_Test;
@@ -150,14 +140,14 @@ namespace events {
 // @member instance        A reference to the strategy itself so its member function can be called
 //
     struct ScheduledEvent : public Event {
-        void (Strategy::*function)();
+        std::function<void(Strategy*)> function;
         Strategy* instance;
 
         // Print function
         void what() override;
 
         // Constructor for the ScheduledEvent
-        ScheduledEvent(void (Strategy::*func)(), Strategy* strat, const BloombergLP::blpapi::Datetime &when);
+        ScheduledEvent(std::function<void(Strategy*)> func, Strategy* strat, const BloombergLP::blpapi::Datetime &when);
 
         // Runs the scheduled event
         void run();

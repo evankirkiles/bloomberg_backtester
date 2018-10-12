@@ -7,6 +7,7 @@
 // Include custom classes
 #include "constants.hpp"
 #include "strategy.hpp"
+#include "strategy/custom/src/basic_algo.hpp"
 
 // Test class for strategy-related functions
 
@@ -41,7 +42,7 @@ TEST(StrategyFixture, schedule_functions) { // NOLINT(cert-err58-cpp)
 //    }
 }
 
-// Checks the run function of a strategy with a placeholder check function scheduled every week open
+// Checks the run function of the base strategy with a placeholder check function scheduled every week open
 TEST(StrategyFixture, run) { // NOLINT(cert-err58-cpp)
     // Initialize a Strategy object
     Strategy strat({"IBM US EQUITY", "AAPL US EQUITY"}, 100000,
@@ -55,4 +56,13 @@ TEST(StrategyFixture, run) { // NOLINT(cert-err58-cpp)
     EXPECT_NO_THROW(strat.run()); // NOLINT(cppcoreguidelines-avoid-goto)
 }
 
-// Checks
+// Check the run function of a derived strategy
+TEST(StrategyFixture, run_derived) { // NOLINT(cert-err58-cpp)
+    // Initialize a BasicAlgo object
+    BasicAlgo strat(BloombergLP::blpapi::Datetime(2014, 1, 1, 0, 0, 0),
+                    BloombergLP::blpapi::Datetime(2015, 1, 1, 0, 0, 0),
+                    100000);
+
+    // Run the function which should print out "CHECKED" several times
+    EXPECT_NO_THROW(strat.run()); // NOLINT(cppcoreguidelines-avoid-goto)
+}

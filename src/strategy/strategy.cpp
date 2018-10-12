@@ -1,3 +1,5 @@
+#include <utility>
+
 //
 // Created by Evan Kirkiles on 9/27/2018.
 //
@@ -16,7 +18,8 @@ BaseStrategy::BaseStrategy(std::vector<std::string> p_symbol_list, unsigned int 
             end_date(p_end),
             date_rules(p_start, p_end),
             time_rules(),
-            portfolio(p_symbol_list, p_initial_capital, p_start) {}
+            portfolio(symbol_list, p_initial_capital, p_start) {
+}
 
 // Orders stocks up to the target percentage, simply by converting the params into signal events
 void BaseStrategy::order_target_percent(const std::string &symbol, double percent) {
@@ -86,6 +89,22 @@ void Strategy::run() {
             event_scheduled.run();
         }
     }
+
+    // Print out performance
+    std::cout << "ALGO FINISHED. Total return: " << portfolio.current_holdings[portfolio_fields::EQUITY_CURVE] << std::endl;
+}
+
+// Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference
+// to this strategy class on the HEAP event list. Then, the function is called at a specific simulated date.
+void Strategy::schedule_function(std::function<void(Strategy*)> func, const DateRules& dateRules, const TimeRules& timeRules) {
+    // Get the datetimes at which the functions should be scheduled
+    std::vector<BloombergLP::blpapi::Datetime> dates = dateRules.get_date_times(timeRules);
+    for (const auto& i : dates) {
+        // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
+        auto toInsertBefore = std::find_if(heap_eventlist.begin(), heap_eventlist.end(), first_date_greater(i));
+        // If no object is found with a later date, the object is put on the end of the heap list
+        heap_eventlist.insert(toInsertBefore, std::make_unique<events::ScheduledEvent>(func, this, i));
+    }
 }
 
 // Scheduled function check
@@ -95,10 +114,10 @@ void Strategy::check() { std::cout << "Function ran on " << current_time << std:
 // Event initialization for ScheduledEvent
 namespace events {
 // Scheduled Event initializer list
-ScheduledEvent::ScheduledEvent(void (Strategy::*p_func)(), Strategy* p_strat,
+ScheduledEvent::ScheduledEvent(std::function<void(Strategy*)> p_func, Strategy* p_strat,
                                const BloombergLP::blpapi::Datetime &p_when) :
         Event("SCHEDULED", p_when),
-        function(p_func),
+        function(std::move(p_func)),
         instance(p_strat) {}
 // Print function for Scheduled Event
 void ScheduledEvent::what() {
