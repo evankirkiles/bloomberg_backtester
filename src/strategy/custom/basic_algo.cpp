@@ -7,7 +7,7 @@
 
 // Initialize the strategy to backtest
 BasicAlgo::BasicAlgo(const BloombergLP::blpapi::Datetime &start, const BloombergLP::blpapi::Datetime &end,
-                     unsigned long capital) :
+                     unsigned int capital) :
      symbol_list({"AAPL US EQUITY",
                   "SPY US EQUITY",
                   "IBM US EQUITY"}),

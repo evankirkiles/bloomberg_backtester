@@ -65,6 +65,7 @@ protected:
 
 // The actual strategy class which contains the logic for the strategy. It inherits from BaseStrategy so that the
 // user does not have access to the complete back end code behind the functioning and so cannot mess much up.
+template<class StratTemplate>
 class Strategy : public BaseStrategy {
 public:
     Strategy(const std::vector<std::string>& symbol_list,
@@ -77,9 +78,19 @@ public:
     // Functions to schedule
     void check();
 
+    // NOTE: Implemented in header to use StratTemplate
     // Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference
     // to this strategy class on the HEAP event list. Then, the function is called at a specific simulated date.
-    void schedule_function(void (Strategy::*func)(), const DateRules& dateRules, const TimeRules& timeRules);
+    void schedule_function(void (StratTemplate::*func)(), const DateRules& dateRules, const TimeRules& timeRules) {
+        // Get the datetimes at which the functions should be scheduled
+        std::vector<BloombergLP::blpapi::Datetime> dates = dateRules.get_date_times(timeRules);
+        for (const auto& i : dates) {
+            // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
+            auto toInsertBefore = std::find_if(heap_eventlist.begin(), heap_eventlist.end(), first_date_greater(i));
+            // If no object is found with a later date, the object is put on the end of the heap list
+            heap_eventlist.insert(toInsertBefore, std::make_unique<events::ScheduledEvent>(func, this, i));
+        }
+    }
 
     // GTest friend class
     friend class StrategyFixture_schedule_functions_Test;

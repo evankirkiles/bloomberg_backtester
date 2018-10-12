@@ -91,20 +91,6 @@ void Strategy::run() {
 // Scheduled function check
 void Strategy::check() { std::cout << "Function ran on " << current_time << std::endl; }
 
-// Inherited function which schedules an event onto the event HEAP. It provides a reference to the strategy's function
-// and the current class passing it in.
-void Strategy::schedule_function(void (Strategy::*func)(), const DateRules& dateRules, const TimeRules& timeRules) {
-    // Get the datetimes at which the functions should be scheduled
-    std::vector<BloombergLP::blpapi::Datetime> dates = dateRules.get_date_times(timeRules);
-    for (const auto& i : dates) {
-        // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
-        auto toInsertBefore = std::find_if(heap_eventlist.begin(), heap_eventlist.end(), first_date_greater(i));
-        // If no object is found with a later date, the object is put on the end of the heap list
-        heap_eventlist.insert(toInsertBefore, std::make_unique<events::ScheduledEvent>(func, this, i));
-    }
-}
-
-
 // MARK: SCHEDULED EVENT INITIALIZATION
 // Event initialization for ScheduledEvent
 namespace events {
