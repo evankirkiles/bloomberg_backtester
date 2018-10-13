@@ -33,14 +33,14 @@ Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
                    const BloombergLP::blpapi::Datetime &p_end_date, const std::string& p_backtest_type) :
            BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
            backtest_type(p_backtest_type),
+           data((backtest_type == "HISTORICAL" ?
+                    std::make_shared<HistoricalDataManager>(&current_time) : nullptr)),
            execution_handler(&stack_eventqueue, &heap_eventlist, data, &portfolio) {
 
-    // Depending on type of data, do different actions to initialize data manager
+    // Depending on type of data, do different actions to upon initialization
     if (backtest_type == "HISTORICAL") {
-        // Create a historical data manager
-        data = std::make_shared<HistoricalDataManager>(start_date);
         // Make sure to fill the HEAP event list with the MarketEvents.
-        auto hist_data = dynamic_cast<HistoricalDataManager>(data);
+        auto hist_data = dynamic_cast<HistoricalDataManager*>(data.get());
         hist_data->fillHistory(symbol_list, start_date, end_date, &heap_eventlist);
     }
 }
@@ -97,7 +97,7 @@ void Strategy::run() {
     }
 
     // Print out performance
-    std::cout << "ALGO FINISHED. Total return: " << portfolio.current_holdings[portfolio_fields::EQUITY_CURVE] << std::endl;
+    std::cout << "ALGO FINISHED. Total return: " << portfolio.current_holdings[portfolio_fields::EQUITY_CURVE] * 100 << '%' << std::endl;
 }
 
 // Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference

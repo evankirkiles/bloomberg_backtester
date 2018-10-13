@@ -37,7 +37,6 @@ double ExecutionHandler::process_signal(const events::SignalEvent &event) {
             std::floor(cost / data->second["PX_LAST"]) : std::ceil(cost / data->second["PX_LAST"]);
     int quantity = (event.percentage == 0) ?
             portfolio->current_positions[event.symbol] * -1 : static_cast<int>(noRoundQuantity);
-
     // Now build the order event and place it onto the STACK to be filled as soon as possible
     stack_eventlist->emplace(std::make_unique<events::OrderEvent>(event.symbol, quantity, event.datetime));
 }
@@ -50,7 +49,9 @@ void ExecutionHandler::process_order(const events::OrderEvent &event) {
 
     // First, get the price of the stock (should be the most recent one as this event is run on the STACK after
     // the stock data has already been updated for the signal order).
-    double price = portfolio->current_holdings[event.symbol] / portfolio->current_positions[event.symbol];
+    std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> recentprice =
+            std::move(data_manager->history({event.symbol}, {"PX_LAST"}, 1, "RECENT"));
+    double price = recentprice->at(event.symbol).data.rbegin()->second["PX_LAST"];
 
     // Make sure the market can handle the order as well. Orders should not get filled if they exceed a
     // certain amount of the market volume in a stock.
@@ -59,8 +60,8 @@ void ExecutionHandler::process_order(const events::OrderEvent &event) {
     double cost = quantity * price;
 
     // Calculate slippage and transaction costs on the order cost
-    double slippage = Slippage::get_slippage(price * event.quantity);
-    double commission = TransactionCosts::get_IB_transaction_cost(event.quantity);
+    double slippage = Slippage::get_slippage(price * quantity);
+    double commission = TransactionCosts::get_IB_transaction_cost(quantity);
 
     // Place a fill event onto the STACK to be performed as soon as possible
     stack_eventlist->emplace(std::make_unique<events::FillEvent>(event.symbol, quantity, cost, slippage, commission, event.datetime));
