@@ -70,7 +70,8 @@ public:
     Strategy(const std::vector<std::string>& symbol_list,
             unsigned int initial_capital,
             const BloombergLP::blpapi::Datetime& start_date,
-            const BloombergLP::blpapi::Datetime& end_date);
+            const BloombergLP::blpapi::Datetime& end_date,
+             const std::string& backtest_type = "HISTORICAL");
 
     void run() override;
 
@@ -87,8 +88,10 @@ public:
     friend class StrategyFixture_run_Test;
 
 private:
-    // The Data Manager for a Historical Strategy
-    std::shared_ptr<HistoricalDataManager> data;
+    // Type of the strategy ("HISTORICAL" only one supported currently)
+    const std::string backtest_type;
+    // The Data Manager
+    std::shared_ptr<DataManager> data;
     // Execution Handler to manage signal and order events
     ExecutionHandler execution_handler;
 };

@@ -30,13 +30,19 @@ void BaseStrategy::order_target_percent(const std::string &symbol, double percen
 // probably should just reconstruct it.
 Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
                 unsigned int p_initial_capital, const BloombergLP::blpapi::Datetime &p_start_date,
-                   const BloombergLP::blpapi::Datetime &p_end_date) :
+                   const BloombergLP::blpapi::Datetime &p_end_date, const std::string& p_backtest_type) :
            BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
-            data(std::make_shared<HistoricalDataManager>(&current_time)),
+           backtest_type(p_backtest_type),
            execution_handler(&stack_eventqueue, &heap_eventlist, data, &portfolio) {
 
-    // Make sure to fill the HEAP event list with the MarketEvents.
-    data->fillHistory(symbol_list, start_date, end_date, &heap_eventlist);
+    // Depending on type of data, do different actions to initialize data manager
+    if (backtest_type == "HISTORICAL") {
+        // Create a historical data manager
+        data = std::make_shared<HistoricalDataManager>(start_date);
+        // Make sure to fill the HEAP event list with the MarketEvents.
+        auto hist_data = dynamic_cast<HistoricalDataManager>(data);
+        hist_data->fillHistory(symbol_list, start_date, end_date, &heap_eventlist);
+    }
 }
 
 // Runs the strategy by iterating through the HEAP event list until it is empty
