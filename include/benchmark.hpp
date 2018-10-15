@@ -14,7 +14,7 @@
 class Benchmark : public Strategy {
 public:
     // Constructor initializes the Strategy parent and buys the SPY shares with the same amount of capital
-    Benchmark(const BloombergLP::blpapi::Datetiem& start, const BloombergLP::blpapi::Datetime& end, unsigned int capital);
+    Benchmark(const BloombergLP::blpapi::Datetime& start, const BloombergLP::blpapi::Datetime& end, unsigned int capital);
 };
 
 #endif //BACKTESTER_BENCHMARK_HPP
