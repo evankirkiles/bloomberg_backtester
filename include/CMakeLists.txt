@@ -13,7 +13,8 @@ set(BACKTEST_HEADERS
         portfolio.hpp
         execution.hpp
         slippage.hpp
-        transactioncosts.hpp)
+        transactioncosts.hpp
+        benchmark.hpp)
 set(BACKTEST_SRCS
         ../src/data/dataretriever.cpp
         ../src/constants.cpp
@@ -25,6 +26,7 @@ set(BACKTEST_SRCS
         ../src/infrastructure/portfolio.cpp
         ../src/infrastructure/execution.cpp
         ../src/simulation/slippage.cpp
-        ../src/simulation/transactioncosts.cpp)
+        ../src/simulation/transactioncosts.cpp
+        ../src/strategy/benchmark.cpp)
 
 add_library(backtester_libs ${BACKTEST_HEADERS} ${BACKTEST_SRCS})
