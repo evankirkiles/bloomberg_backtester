@@ -76,16 +76,16 @@ HistoricalDataRetriever::pullHistoricalData(const std::vector<std::string> &secu
 
 // Builds the Real Time data retriever for sessions and subscriptions of data. This constructor initializes
 // members and builds the session which will be run when runSubscription is called.
-RealTimeDataRetriever::RealTimeDataRetriever(std::list<std::unique_ptr<events::Event>> *heap_eventlist,
-                                             std::mutex* p_mtx, int p_correlation_id) :
-        heap_list(heap_eventlist), mtx(p_mtx), correlation_id(p_correlation_id) {
+RealTimeDataRetriever::RealTimeDataRetriever(std::mutex* p_mtx, int p_correlation_id) :
+        correlation_id(p_correlation_id),
+        data_handler(&buffer_queue, p_mtx) {
 
     // First initialize the session options with global session run settings.
     BloombergLP::blpapi::SessionOptions session_options;
     session_options.setServerHost(bloomberg_session::HOST);
     session_options.setServerPort(bloomberg_session::PORT);
     // Also initialize the Session connection to Bloomberg Communications
-    session = std::make_unique<BloombergLP::blpapi::Session>(session_options);
+    session = std::make_unique<BloombergLP::blpapi::Session>(session_options, &data_handler);
     // Open up the session in preparation for data requests
     if (!session->start()) {
         throw std::runtime_error("Failed to start session! Aborting.");
@@ -99,12 +99,56 @@ RealTimeDataRetriever::~RealTimeDataRetriever() { stopSubscriptions(); session->
 // into a MarketEvent which is put onto the buffer queue. Once the mutex unlocks, the queue is filled
 // into the heap event list and then emptied.
 void RealTimeDataRetriever::runSubscription(const std::vector<std::string>& symbols) {
-
+    // Add all the tickers to the subscription
+    for (const auto& i : symbols) {
+        subscriptions.add(i.c_str(), "LAST_PRICE", "", BloombergLP::blpapi::CorrelationId((char*)i.c_str()));
+    }
+    // Run the subscription
+    session->openService(bloomberg_services::MKTDATA);
+    session->subscribe(subscriptions);
 }
 
 // Stops all subscriptions
 void RealTimeDataRetriever::stopSubscriptions() {
     session->unsubscribe(subscriptions);
+}
+
+// Constructor for the EventHandler for realtime data
+RealTimeDataHandler::RealTimeDataHandler(std::queue<std::unique_ptr<events::Event>> *p_queue, std::mutex *p_mtx) :
+        queue(p_queue), mtx(p_mtx) {}
+
+// Process the events received through the subscription into the queue, only when the mutex is unlocked. Otherwise,
+// the events remain in the session until the EventHandler is able to be unlocked and retrieve them.
+bool RealTimeDataHandler::processEvent(const BloombergLP::blpapi::Event &event,
+                                       BloombergLP::blpapi::Session *session) {
+
+    // Only interested in market data events related to the subscription
+    if (event.eventType() == BloombergLP::blpapi::Event::SUBSCRIPTION_DATA) {
+        // Iterate through the messages returned
+        BloombergLP::blpapi::MessageIterator msgIter(event);
+        while (msgIter.next()) {
+            // Get one message and store it in message
+            BloombergLP::blpapi::Message msg = msgIter.message();
+            // Get the symbol
+            std::string ticker = (char*)msg.correlationId().asPointer();
+            // If the elements are present, then get the last price and write it to the queue
+            if (msg.hasElement("LAST_TRADE", true)) {
+
+                // Block until the mutex is unlocked so the queue is editable by this.
+                // The mutex is automatically unlocked once this unique lock is destroyed (at end of emplace).
+                std::unique_lock<std::mutex>lock(*mtx);
+
+                // Build the MarketEvent to place onto the queue
+                queue->emplace(std::make_unique<events::MarketEvent>(new events::MarketEvent(
+                                {ticker},
+                                {{ticker, msg.getElementAsFloat64("LAST_TRADE")}},
+                                msg.getElementAsDatetime("TIME"))));
+            }
+        }
+    }
+
+    // Returns true if processed event
+    return true;
 }
 
 // Initializes the unique ptr to the unordered map to be returned
@@ -177,7 +221,7 @@ bool HistoricalDataHandler::processResponseEvent(const BloombergLP::blpapi::Even
 }
 
 // Handles any exceptions in the message received from Bloomberg.
-bool HistoricalDataHandler::processExceptionsAndErrors(BloombergLP::blpapi::Message msg) {
+bool DataHandler::processExceptionsAndErrors(BloombergLP::blpapi::Message msg) {
     // If there is no security data, return a call to processErrors
     if (!msg.hasElement(element_names::SECURITY_DATA)) {
         if (msg.hasElement(element_names::RESPONSE_ERROR)) {

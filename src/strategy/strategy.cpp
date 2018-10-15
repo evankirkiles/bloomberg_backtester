@@ -28,8 +28,10 @@ void BaseStrategy::order_target_percent(const std::string &symbol, double percen
 // Builds the Strategy object with the given initial capital and start and end. To reformat the strategy,
 // probably should just reconstruct it.
 Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
-                unsigned int p_initial_capital, const BloombergLP::blpapi::Datetime &p_start_date,
-                   const BloombergLP::blpapi::Datetime &p_end_date, const std::string& p_backtest_type) :
+                   unsigned int p_initial_capital,
+                   const BloombergLP::blpapi::Datetime &p_start_date,
+                   const BloombergLP::blpapi::Datetime &p_end_date,
+                   const std::string& p_backtest_type) :
            BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
            backtest_type(p_backtest_type),
            data(std::make_shared<HistoricalDataManager>(&current_time,
@@ -116,6 +118,108 @@ void Strategy::schedule_function(std::function<void(Strategy*)> func, const Date
 
 // Scheduled function check
 void Strategy::check() { std::cout << "Function ran on " << current_time << std::endl; }
+
+// MARK: LIVE STRATEGY FUNCTIONALITY
+// Constructs a live strategy with the mutex for running it on two threads
+LiveStrategy::LiveStrategy(const std::vector<std::string> &p_symbol_list,
+                           unsigned int p_initial_capital,
+                           const BloombergLP::blpapi::Datetime &p_start_date,
+                           const BloombergLP::blpapi::Datetime &p_end_date) :
+        BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
+        data(std::make_shared<HistoricalDataManager>(&current_time, correlation_ids::INTRADAY_REQUEST_CID)),
+        execution_handler(&stack_eventqueue, &heap_eventlist, data, &portfolio),
+        live_data(std::make_unique<RealTimeDataRetriever>(&mtx)) { }
+
+// Runs the live strategy by simply continually updating the current time, checking if the object in the front of
+// the event heap has a datetime less than or equal to the current time, and if so, interpreting that event. Once
+// the event is finished, the first event is popped off and the loop continues.
+void LiveStrategy::run() {
+
+    // Runs the subscription with Bloomberg realtime data (already in a separate thread)
+    live_data->runSubscription(symbol_list);
+
+    // Sets the start date and current time to the current DateTime
+    BloombergLP::blpapi::Datetime current = date_funcs::get_now();
+    start_date = current;
+    current_time = current;
+    portfolio.reset_portfolio(initial_capital, current);
+
+    // The datetime incrementing loop which continuously updates the current time
+    for (current_time; date_funcs::is_greater(end_date, current_time); current_time = date_funcs::get_now()) {
+
+
+        // When there are new market events, put them into the heap
+        if (!live_data->buffer_queue.empty()) {
+            mtx.lock();
+
+            // Pulls all the data from the queue in the live data feed into the event HEAP
+            while (!live_data->buffer_queue.empty()) {
+                // Get the first-in market event from the buffer queue
+                std::unique_ptr<events::Event> new_event = std::move(live_data->buffer_queue.front());
+                live_data->buffer_queue.pop();
+
+                // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
+                auto toInsertBefore = std::find_if(heap_eventlist.begin(), heap_eventlist.end(), first_date_greater(new_event->datetime));
+                // If no object is found with a later date, the object is put on the end of the heap list
+                heap_eventlist.insert(toInsertBefore, std::move(new_event));
+            }
+
+            // Once the buffer queue is empty, unlock the mutex
+            mtx.unlock();
+        }
+
+        // The event object to process
+        std::unique_ptr<events::Event> event = nullptr;
+        // Now process the events similarly to how a normal strategy does it. First go through the stack,
+        // and then compare the datetimes to see if any events are available to be run
+        if (!stack_eventqueue.empty()) {
+            // Grab the first event on the stack and remove it from the queue
+            event = std::move(stack_eventqueue.front());
+            stack_eventqueue.pop();
+        } else {
+            // If there is not event on the heap, keep updating the time and looking for new MarketEvents
+            if (heap_eventlist.empty()) {
+                continue;
+            } else {
+                // Compare the current date time to the date of the event on the front of the HEAP
+                if (date_funcs::is_greater(current, heap_eventlist.front()->datetime)) {
+                    event = std::move(heap_eventlist.front());
+                    heap_eventlist.pop_front();
+                } else {
+                    continue;
+                }
+            }
+        }
+
+        // Now downcast the event and perform whatever function it requires
+        if (event->type == "MARKET") {
+            events::MarketEvent event_market = *dynamic_cast<events::MarketEvent *>(event.release());
+            // Pass the market event into the portfolio to update holdings
+            portfolio.update_market(event_market);
+
+        } else if (event->type == "SIGNAL") {
+            events::SignalEvent event_signal = *dynamic_cast<events::SignalEvent *>(event.release());
+            // Pass the signal event into the execution handler to generate orders
+            execution_handler.process_signal(event_signal);
+
+        } else if (event->type == "ORDER") {
+            events::OrderEvent event_order = *dynamic_cast<events::OrderEvent *>(event.release());
+            // Pass the order event into the execution handler to generate a fill
+            execution_handler.process_order(event_order);
+
+        } else if (event->type == "FILL") {
+            events::FillEvent event_fill = *dynamic_cast<events::FillEvent *>(event.release());
+            // Pass the fill event into the portfolio to update holdings
+            portfolio.update_fill(event_fill);
+
+        } else if (event->type == "SCHEDULED") {
+            events::ScheduledEvent event_scheduled = *dynamic_cast<events::ScheduledEvent *>(event.release());
+            // Run the function referenced to in the schedule event
+            event_scheduled.run();
+        }
+    }
+
+}
 
 // MARK: SCHEDULED EVENT INITIALIZATION
 // Event initialization for ScheduledEvent

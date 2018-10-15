@@ -45,7 +45,7 @@ public:
     // Constructor which initializes the session connection to Bloomberg API through which data will be requested.
     // The type parameter works to specify a type of data which will be handled by the instance of the HistoricalDataRetriever.
     // Options currently include HISTORICAL_DATA, but will eventually support INTRADAY_DATA.
-    HistoricalDataRetriever(const std::string& type, int correlation_id = correlation_ids::HISTORICAL_REQUEST_CID);
+    explicit HistoricalDataRetriever(const std::string& type, int correlation_id = correlation_ids::HISTORICAL_REQUEST_CID);
 
     // On destruction, close the session before releasing the object
     ~HistoricalDataRetriever();
@@ -67,6 +67,33 @@ private:
     std::unique_ptr<BloombergLP::blpapi::Session> session;
 };
 
+
+// Overhead struct which contains methods for interpreting events from Bloomberg API containing data.
+struct DataHandler {
+    // Makes sure the message is valid before parsing the fields from it
+    bool processExceptionsAndErrors(BloombergLP::blpapi::Message msg);
+};
+
+// Class which is linked to the real time data subscription and builds MarketEvents from the subscription data.
+// Needs to be an EventHandler so it can be linked to the session. It will place all the events into SymbolHistoricalData
+// form onto a queue. After each event is processed in the main event loop, the main thread runs a check to see if
+// the queue has any elements. If it does, it locks the mutex and empties the queue by inserting it into the HEAP.
+// The queue is then unlocked and events can continue to flow through.
+struct RealTimeDataHandler : public DataHandler, public BloombergLP::blpapi::EventHandler {
+public:
+    // Constructor receives a reference to the mutex and queue which it stores to enable placing onto queue
+    RealTimeDataHandler(std::queue<std::unique_ptr<events::Event>>* queue, std::mutex* mtx);
+
+    // The actual event handler method which receives the events. It uses the mutex so it does not edit the queue
+    // when it is being read.
+    bool processEvent(const BloombergLP::blpapi::Event &event, BloombergLP::blpapi::Session *session) override;
+
+private:
+    // The mutex and queue used for the realtime data retrieval
+    std::queue<std::unique_ptr<events::Event>>* queue;
+    std::mutex* mtx;
+};
+
 // Class for subscription-based data retrieval from the Bloomberg API. When the event calculations are finished
 // and the stack is empty, the algorithm will unlock the event heap and wait for a new market event to be filled in
 // or for the realtime date counter to exceed the datetime of the next ScheduledEvent.
@@ -78,8 +105,7 @@ public:
     // use of a mutex which locks the HEAP in the main thread until the event is finished processing, at which
     // the HEAP in the main thread is unlocked and LOCKED in the session thread while the queue is copied over.
     // Once that is finished, the queue in the other thread is emptied and the HEAP is locked back in the main thread.
-    RealTimeDataRetriever(std::list<std::unique_ptr<events::Event>>* heap_eventlist, std::mutex* p_mtx,
-                          int correlation_id = correlation_ids::LIVE_REQUEST_CID);
+    explicit RealTimeDataRetriever(std::mutex* p_mtx, int correlation_id = correlation_ids::LIVE_REQUEST_CID);
 
     // On destruction, close the session and end the subscription before releasing the object
     ~RealTimeDataRetriever();
@@ -91,34 +117,29 @@ public:
     // Stops all subscriptions
     void stopSubscriptions();
 
-private:
-    // A pointer to the mutex which will be used for locking the HEAP
-    std::mutex* mtx;
     // A buffer queue which holds the market events received until the mutex is unlocked
     std::queue<std::unique_ptr<events::Event>> buffer_queue;
-    // A pointer to the heap which will be filled by the buffer queue
-    std::list<std::unique_ptr<events::Event>>* heap_list;
+private:
     // The correlation ID for requests
     const int correlation_id;
     // The session through which the subscription will be run
     std::unique_ptr<BloombergLP::blpapi::Session> session;
     // The symbols subscribed to
     BloombergLP::blpapi::SubscriptionList subscriptions;
+    // The handler for all the data coming through the subscription, possesses the mutex
+    RealTimeDataHandler data_handler;
 };
 
 // Class which is the direct link between the program and the messages received by the Bloomberg API. Is passed
 // in to the session instance so all messages being sent by the session are interpreted by this class. Inherits
 // from the base Bloomberg Event Handler class. This version of the data handler is specific for historical data
 // and thus should only be used with DataRetrievers of type HISTORICAL_DATA.
-struct HistoricalDataHandler {
+struct HistoricalDataHandler : public DataHandler {
     // Constructor initializes the unique ptr to empty unordered map
     HistoricalDataHandler();
     // The event handler logic function which receives data packets from Bloomberg API. Returns false until
     // the event passed in is a Response object, at which point the data is done streaming.
     bool processResponseEvent(const BloombergLP::blpapi::Event &event);
-
-    // Makes sure the message is valid before parsing the fields from it
-    bool processExceptionsAndErrors(BloombergLP::blpapi::Message msg);
 
     // A pointer to the object into which historical data is filled.
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> target;

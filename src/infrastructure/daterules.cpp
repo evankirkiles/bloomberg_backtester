@@ -341,4 +341,44 @@ BloombergLP::blpapi::Datetime add_seconds(const BloombergLP::blpapi::Datetime& c
             static_cast<unsigned int>(timeinfo.tm_sec), 0);
 }
 
+// Function for getting the current time as a Datetime
+BloombergLP::blpapi::Datetime get_now() {
+    std::time_t t = std::time(0);
+    std::tm* now = std::localtime(&t);
+    return BloombergLP::blpapi::Datetime((unsigned int)now->tm_year + 1900, (unsigned int)now->tm_mon + 1,
+                                             (unsigned int)now->tm_mday, (unsigned int)now->tm_hour,
+                                             (unsigned int)now->tm_min, (unsigned int)now->tm_sec);
+}
+
+// Compares two dates, returning true if the first is greater than the second
+bool is_greater(const BloombergLP::blpapi::Datetime& first, const BloombergLP::blpapi::Datetime& second) {
+        // Returns true for the first element whose date is later by checking all datetime fields
+        // If all fields are equal, still returns false because do not want to schedule before the same date
+        if (first.year() > second.year()) return true;
+        else if (first.year() < second.year()) return false;
+        else {
+            if (first.month() > second.month()) return true;
+            else if (first.month() < second.month()) return false;
+            else {
+                if (first.day() > second.day()) return true;
+                else if (first.day() < second.day()) return false;
+                else {
+                    if (first.hours() > second.hours()) return true;
+                    else if (first.hours() < second.hours()) return false;
+                    else {
+                        if (first.minutes() > second.minutes()) return true;
+                        else if (first.minutes() < second.minutes()) return false;
+                        else {
+                            if (first.seconds() > second.seconds()) return true;
+                            else if (first.seconds() < second.seconds()) return false;
+                            else {
+                                return first.milliseconds() > second.milliseconds();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+}
+
 }

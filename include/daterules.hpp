@@ -7,7 +7,7 @@
 // Bloomberg includes
 #include "bloombergincludes.hpp"
 // Include datetime for date offsetting
-#include <time.h>
+#include <ctime>
 // Custom class includes
 #include "constants.hpp"
 #include "holidays.hpp"
@@ -74,7 +74,11 @@ namespace date_funcs {
     BloombergLP::blpapi::Datetime add_seconds(const BloombergLP::blpapi::Datetime& currentTime, int seconds,
             bool weekDaysOnly = false, int mode = -1);
 
-    // Unary compare function for use in inserting
+    // Gets the current time
+    BloombergLP::blpapi::Datetime get_now();
+
+    // Compares two dates, returning true if the first is greater
+    bool is_greater(const BloombergLP::blpapi::Datetime& first, const BloombergLP::blpapi::Datetime& second);
 }
 
 
