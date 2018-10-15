@@ -7,8 +7,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_INCLUDE_CURRENT_DIR YES)
 
+if(APPLE)
+# Bloomberg MAC library includes
+include_directories("/Users/evankirkiles/Downloads/blpapi_cpp_3.8.18.1/include")
+else()
 # Bloomberg library includes
 include_directories("C:\\blp\\C++\\include")
+endif()
 # Also include project level directories
 include_directories(src include test)
 add_subdirectory(include)
