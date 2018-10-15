@@ -36,7 +36,8 @@ protected:
 class HistoricalDataManager : public DataManager {
 public:
     // Constructor to build the Historical Data Manager
-    explicit HistoricalDataManager(BloombergLP::blpapi::Datetime* currentTime);
+    explicit HistoricalDataManager(BloombergLP::blpapi::Datetime* currentTime,
+                                   int correlation_id = correlation_ids::HISTORICAL_REQUEST_CID);
 
     // Function that initializes the MarketEvents onto the event list in chronological order. Should be called before
     // any backtesting takes place, as it enables the Portfolio to calculate returns and holdings.

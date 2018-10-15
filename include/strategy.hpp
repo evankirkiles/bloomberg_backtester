@@ -32,8 +32,7 @@ public:
     BaseStrategy(std::vector<std::string> symbol_list,
                 unsigned int initial_capital,
                 const BloombergLP::blpapi::Datetime& start,
-                const BloombergLP::blpapi::Datetime& end,
-                const std::string& type = "HISTORICAL DATA");
+                const BloombergLP::blpapi::Datetime& end);
 
     // Function to order a target percentage of stocks
     void order_target_percent(const std::string& symbol, double percent);
@@ -54,7 +53,6 @@ protected:
 
     // Run function members, for breaking loop and keeping track of current Event position
     bool running = false;
-    std::list<std::unique_ptr<events::Event>>::iterator currentEvent;
 
     // STACK event queue, who must be empty for the HEAP event list to continue to run
     std::queue<std::unique_ptr<events::Event>> stack_eventqueue;
@@ -63,8 +61,8 @@ protected:
 };
 
 
-// The actual strategy class which contains the logic for the strategy. It inherits from BaseStrategy so that the
-// user does not have access to the complete back end code behind the functioning and so cannot mess much up.
+// The actual strategy class which contains the back end logic for the strategy. It inherits from BaseStrategy so that
+// the user does not have access to the complete back end code behind the functioning and so cannot mess much up.
 class Strategy : public BaseStrategy {
 public:
     Strategy(const std::vector<std::string>& symbol_list,
@@ -78,7 +76,6 @@ public:
     // Functions to schedule
     void check();
 
-    // NOTE: Implemented in header to use StratTemplate
     // Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference
     // to this strategy class on the HEAP event list. Then, the function is called at a specific simulated date.
     void schedule_function(std::function<void(Strategy*)> func, const DateRules& dateRules, const TimeRules& timeRules);
@@ -91,6 +88,37 @@ private:
     // Type of the strategy ("HISTORICAL" only one supported currently)
     const std::string backtest_type;
     // The Data Manager
+    std::shared_ptr<DataManager> data;
+    // Execution Handler to manage signal and order events
+    ExecutionHandler execution_handler;
+};
+
+// The class for the live-updating strategy backtest. Its constructor will be the exact same as the strategy one, so
+// it is easier to transfer a basic algo onto this different backtest system.
+class LiveStrategy : public BaseStrategy {
+public:
+    LiveStrategy(const std::vector<std::string>& symbol_list,
+                 unsigned int initial_capital,
+                 const BloombergLP::blpapi::Datetime& start_date,
+                 const BloombergLP::blpapi::Datetime& end_date);
+
+    // This function runs on a separate thread from the data receiver, allowing the user to use subscription
+    // data from Bloomberg with a mutex to append to the heap from one thread and read from it (and pop front)
+    // from the other. Has a specially built live data manager, retriever, and handler.
+    void run() override;
+
+    // Functions to schedule
+    void check();
+
+    // Schedules member functions in a similar way to Strategy. The only difference is that the market events added
+    // may be inserted before and after this scheduled function, rather than simply the scheduled function
+    // being built after all market events.
+    void schedule_function(std::function<void(LiveStrategy*)> func, const DateRules& dateRules, const TimeRules& timeRules);
+
+private:
+    // A live data handler which writes to the event heap
+    std::unique_ptr<> live_data;
+    // The data manager which grabs intraday (minute-level) data up to 140 days into the past
     std::shared_ptr<DataManager> data;
     // Execution Handler to manage signal and order events
     ExecutionHandler execution_handler;

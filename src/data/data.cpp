@@ -6,8 +6,8 @@
 #include "data.hpp"
 
 // Constructor that sets up the connection to the Bloomberg Data API so data can be pulled.
-HistoricalDataManager::HistoricalDataManager(BloombergLP::blpapi::Datetime* p_currentTime) :
-        DataManager(p_currentTime), dr("HISTORICAL_DATA") {}
+HistoricalDataManager::HistoricalDataManager(BloombergLP::blpapi::Datetime* p_currentTime, int p_correlation_id) :
+        DataManager(p_currentTime), dr("HISTORICAL_DATA", p_correlation_id) {}
 
 // Function that builds the Market Events and puts them onto the HEAP event list in chronological order. Does so
 // by first pulling the EOD last price data for the securities to be traded by the algorithm and then generating Market

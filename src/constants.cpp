@@ -48,7 +48,6 @@ namespace portfolio_fields {
     const char* TOTAL_HOLDINGS("total_holdings");
     const char* RETURNS("returns");
     const char* EQUITY_CURVE("equity_curve");
-    const char* RESERVE_CASH("reserve_cash");
 }
 
 // Enums for the date rules specifying types
@@ -74,4 +73,10 @@ namespace date_time_enums {
 namespace simulation {
     const double SLIPPAGE_LN_MEAN(0);
     const double SLIPPAGE_LN_SD(1);
+}
+
+namespace correlation_ids {
+    const unsigned int HISTORICAL_REQUEST_CID(0);
+    const unsigned int LIVE_REQUEST_CID(1);
+    const unsigned int INTRADAY_REQUEST_CID(2);
 }

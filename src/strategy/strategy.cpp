@@ -9,8 +9,7 @@
 
 // Builds the parent abstract class
 BaseStrategy::BaseStrategy(std::vector<std::string> p_symbol_list, unsigned int p_initial_capital,
-                           const BloombergLP::blpapi::Datetime &p_start, const BloombergLP::blpapi::Datetime &p_end,
-                           const std::string& type) :
+                           const BloombergLP::blpapi::Datetime &p_start, const BloombergLP::blpapi::Datetime &p_end) :
             symbol_list(std::move(p_symbol_list)),
             initial_capital(p_initial_capital),
             start_date(p_start),
@@ -33,8 +32,11 @@ Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
                    const BloombergLP::blpapi::Datetime &p_end_date, const std::string& p_backtest_type) :
            BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
            backtest_type(p_backtest_type),
-           data((backtest_type == "HISTORICAL" ?
-                    std::make_shared<HistoricalDataManager>(&current_time) : nullptr)),
+           data(std::make_shared<HistoricalDataManager>(&current_time,
+                   // Ternary used for setting the correlation ID
+                   (p_backtest_type == "HISTORICAL" ? correlation_ids::HISTORICAL_REQUEST_CID :
+                    p_backtest_type == "INTRADAY" ? correlation_ids::INTRADAY_REQUEST_CID)
+           )),
            execution_handler(&stack_eventqueue, &heap_eventlist, data, &portfolio) {
 
     // Depending on type of data, do different actions to upon initialization
@@ -48,11 +50,10 @@ Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
 // Runs the strategy by iterating through the HEAP event list until it is empty
 void Strategy::run() {
     // Place the iterator onto the heap eventlist
-    currentEvent = heap_eventlist.begin();
     running = true;
 
     // Use a boolean value to allow for exiting after a loop
-    while(running && (currentEvent != heap_eventlist.end() || !stack_eventqueue.empty())) {
+    while(running && (!heap_eventlist.empty() || !stack_eventqueue.empty())) {
         std::unique_ptr<events::Event> event;
         // If the STACK is empty, take in events on the HEAP and process them, otherwise go through
         // the events on the STACK until it is empty. STACk always starts out empty.
@@ -62,8 +63,8 @@ void Strategy::run() {
             stack_eventqueue.pop();
         } else {
             // Iterate the currentEvent forwards and retrieve its object
-            event = std::move(*currentEvent);
-            currentEvent++;
+            event = std::move(heap_eventlist.front());
+            heap_eventlist.pop_front();
         }
 
         // Set the current time to the datetime of the event

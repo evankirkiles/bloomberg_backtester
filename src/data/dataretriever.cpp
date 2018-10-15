@@ -10,7 +10,8 @@
 // @param type             The type of data which will be used for this data retriever.
 //                          -> HISTORICAL_DATA, INTRADAY_DATA, REALTIME_DATA
 //
-HistoricalDataRetriever::HistoricalDataRetriever(const std::string &p_type) : type(p_type) {
+HistoricalDataRetriever::HistoricalDataRetriever(const std::string &p_type, int p_correlation_id) :
+        type(p_type), correlation_id(p_correlation_id) {
     // First initialize the session options with global session run settings.
     BloombergLP::blpapi::SessionOptions session_options;
     session_options.setServerHost(bloomberg_session::HOST);
@@ -59,7 +60,7 @@ HistoricalDataRetriever::pullHistoricalData(const std::vector<std::string> &secu
 
     // Build an Event queue onto which to receive the data which will be handled
     BloombergLP::blpapi::EventQueue queue;
-    session->sendRequest(request, BloombergLP::blpapi::CorrelationId(1), &queue);
+    session->sendRequest(request, BloombergLP::blpapi::CorrelationId(correlation_id), &queue);
     // Handle events as they come in to the queue
     HistoricalDataHandler handler;
     bool responseFinished = false;
@@ -71,6 +72,39 @@ HistoricalDataRetriever::pullHistoricalData(const std::vector<std::string> &secu
     }
     // When event finishes, return the handler's data map pointer
     return std::move(handler.target);
+}
+
+// Builds the Real Time data retriever for sessions and subscriptions of data. This constructor initializes
+// members and builds the session which will be run when runSubscription is called.
+RealTimeDataRetriever::RealTimeDataRetriever(std::list<std::unique_ptr<events::Event>> *heap_eventlist,
+                                             std::mutex* p_mtx, int p_correlation_id) :
+        heap_list(heap_eventlist), mtx(p_mtx), correlation_id(p_correlation_id) {
+
+    // First initialize the session options with global session run settings.
+    BloombergLP::blpapi::SessionOptions session_options;
+    session_options.setServerHost(bloomberg_session::HOST);
+    session_options.setServerPort(bloomberg_session::PORT);
+    // Also initialize the Session connection to Bloomberg Communications
+    session = std::make_unique<BloombergLP::blpapi::Session>(session_options);
+    // Open up the session in preparation for data requests
+    if (!session->start()) {
+        throw std::runtime_error("Failed to start session! Aborting.");
+    };
+}
+
+// Destructor which closes the connection to the Bloomberg API.
+RealTimeDataRetriever::~RealTimeDataRetriever() { stopSubscriptions(); session->stop(); }
+
+// Begins the subscription for a vector of symbols, getting the PX_LAST data for each one and building it
+// into a MarketEvent which is put onto the buffer queue. Once the mutex unlocks, the queue is filled
+// into the heap event list and then emptied.
+void RealTimeDataRetriever::runSubscription(const std::vector<std::string>& symbols) {
+
+}
+
+// Stops all subscriptions
+void RealTimeDataRetriever::stopSubscriptions() {
+    session->unsubscribe(subscriptions);
 }
 
 // Initializes the unique ptr to the unordered map to be returned

@@ -51,7 +51,6 @@ namespace portfolio_fields {
     extern const char* TOTAL_HOLDINGS;
     extern const char* RETURNS;
     extern const char* EQUITY_CURVE;
-    extern const char* RESERVE_CASH;
 }
 
 
@@ -79,6 +78,13 @@ namespace date_time_enums {
 namespace simulation {
     extern const double SLIPPAGE_LN_MEAN;
     extern const double SLIPPAGE_LN_SD;
+}
+
+// Correlation IDs
+namespace correlation_ids {
+    extern const unsigned int HISTORICAL_REQUEST_CID;
+    extern const unsigned int LIVE_REQUEST_CID;
+    extern const unsigned int INTRADAY_REQUEST_CID;
 }
 
 #endif //BACKTESTER_CONSTANTS_HPP
