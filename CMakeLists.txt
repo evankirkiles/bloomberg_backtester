@@ -44,7 +44,6 @@ add_executable(Backtester
         ${BACKTEST_SRCS}
         ${ALGOS})
 
-
 target_link_libraries(backtester_libs)
 target_link_libraries(strategy_files)
 
@@ -55,4 +54,4 @@ message(STATUS "Bloomberg Libraries: ${BLPAPI_LIBRARIES}")
 target_link_libraries(Backtester ${BLPAPI_LIBRARIES})
 
 # Link the executable to pthread
-target_link_libraries(Backtester Threads::Threads)
+target_link_libraries(Backtester Threads::Threads curlpp)
