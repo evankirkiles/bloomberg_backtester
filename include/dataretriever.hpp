@@ -10,8 +10,7 @@
 // Bloomberg API includes
 #include "bloombergincludes.hpp"
 // STL includes
-#include <thread>
-#include <mutex>
+#include <pthread.h>
 // Project includes
 #include "constants.hpp"
 #include "events.hpp"
@@ -82,7 +81,7 @@ struct DataHandler {
 struct RealTimeDataHandler : public DataHandler, public BloombergLP::blpapi::EventHandler {
 public:
     // Constructor receives a reference to the mutex and queue which it stores to enable placing onto queue
-    RealTimeDataHandler(std::queue<std::unique_ptr<events::Event>>* queue, std::mutex* mtx);
+    RealTimeDataHandler(std::queue<std::unique_ptr<events::Event>>* queue, pthread_mutex_t* mtx);
 
     // The actual event handler method which receives the events. It uses the mutex so it does not edit the queue
     // when it is being read.
@@ -91,7 +90,7 @@ public:
 private:
     // The mutex and queue used for the realtime data retrieval
     std::queue<std::unique_ptr<events::Event>>* queue;
-    std::mutex* mtx;
+    pthread_mutex_t* mtx;
 };
 
 // Class for subscription-based data retrieval from the Bloomberg API. When the event calculations are finished
@@ -105,7 +104,7 @@ public:
     // use of a mutex which locks the HEAP in the main thread until the event is finished processing, at which
     // the HEAP in the main thread is unlocked and LOCKED in the session thread while the queue is copied over.
     // Once that is finished, the queue in the other thread is emptied and the HEAP is locked back in the main thread.
-    explicit RealTimeDataRetriever(std::mutex* p_mtx, int correlation_id = correlation_ids::LIVE_REQUEST_CID);
+    explicit RealTimeDataRetriever(pthread_mutex_t* p_mtx, int correlation_id = correlation_ids::LIVE_REQUEST_CID);
 
     // On destruction, close the session and end the subscription before releasing the object
     ~RealTimeDataRetriever();

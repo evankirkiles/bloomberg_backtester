@@ -6,14 +6,14 @@ project(backtester)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_INCLUDE_CURRENT_DIR YES)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 
-if(APPLE)
-# Bloomberg MAC library includes
-include_directories("/Users/evankirkiles/Downloads/blpapi_cpp_3.8.18.1/include")
-else()
+# Find the pthreads
+find_package(Threads REQUIRED)
+
 # Bloomberg library includes
 include_directories("C:\\blp\\C++\\include")
-endif()
+
 # Also include project level directories
 include_directories(src include test)
 add_subdirectory(include)
@@ -44,6 +44,7 @@ add_executable(Backtester
         ${BACKTEST_SRCS}
         ${ALGOS})
 
+
 target_link_libraries(backtester_libs)
 target_link_libraries(strategy_files)
 
@@ -52,3 +53,6 @@ file(GLOB BLPAPI_LIBRARIES
         "C:/blp/C++/lib/*.lib")
 message(STATUS "Bloomberg Libraries: ${BLPAPI_LIBRARIES}")
 target_link_libraries(Backtester ${BLPAPI_LIBRARIES})
+
+# Link the executable to pthread
+target_link_libraries(Backtester Threads::Threads)

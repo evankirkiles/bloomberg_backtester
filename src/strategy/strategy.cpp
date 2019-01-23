@@ -37,7 +37,7 @@ Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
            data(std::make_shared<HistoricalDataManager>(&current_time,
                    // Ternary used for setting the correlation ID
                    (p_backtest_type == "HISTORICAL" ? correlation_ids::HISTORICAL_REQUEST_CID :
-                    p_backtest_type == "INTRADAY" ? correlation_ids::INTRADAY_REQUEST_CID)
+                    p_backtest_type == "INTRADAY" ? correlation_ids::INTRADAY_REQUEST_CID : correlation_ids::LIVE_REQUEST_CID)
            )),
            execution_handler(&stack_eventqueue, &heap_eventlist, data, &portfolio) {
 
@@ -93,7 +93,7 @@ void Strategy::run() {
             portfolio.update_fill(event_fill);
 
         } else if (event->type == "SCHEDULED") {
-            events::ScheduledEvent event_scheduled = *dynamic_cast<events::ScheduledEvent *>(event.release());
+            events::ScheduledEvent<Strategy> event_scheduled = *dynamic_cast<events::ScheduledEvent<Strategy>*>(event.release());
             // Run the function referenced to in the schedule event
             event_scheduled.run();
         }
@@ -112,7 +112,7 @@ void Strategy::schedule_function(std::function<void(Strategy*)> func, const Date
         // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
         auto toInsertBefore = std::find_if(heap_eventlist.begin(), heap_eventlist.end(), first_date_greater(i));
         // If no object is found with a later date, the object is put on the end of the heap list
-        heap_eventlist.insert(toInsertBefore, std::make_unique<events::ScheduledEvent>(func, this, i));
+        heap_eventlist.insert(toInsertBefore, std::make_unique<events::ScheduledEvent<Strategy>>(func, this, i));
     }
 }
 
@@ -128,7 +128,7 @@ LiveStrategy::LiveStrategy(const std::vector<std::string> &p_symbol_list,
         BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
         data(std::make_shared<HistoricalDataManager>(&current_time, correlation_ids::INTRADAY_REQUEST_CID)),
         execution_handler(&stack_eventqueue, &heap_eventlist, data, &portfolio),
-        live_data(std::make_unique<RealTimeDataRetriever>(&mtx)) { }
+        live_data(std::make_unique<RealTimeDataRetriever>(mtx)) { }
 
 // Runs the live strategy by simply continually updating the current time, checking if the object in the front of
 // the event heap has a datetime less than or equal to the current time, and if so, interpreting that event. Once
@@ -150,7 +150,7 @@ void LiveStrategy::run() {
 
         // When there are new market events, put them into the heap
         if (!live_data->buffer_queue.empty()) {
-            mtx.lock();
+            pthread_mutex_lock(mtx);
 
             // Pulls all the data from the queue in the live data feed into the event HEAP
             while (!live_data->buffer_queue.empty()) {
@@ -165,7 +165,7 @@ void LiveStrategy::run() {
             }
 
             // Once the buffer queue is empty, unlock the mutex
-            mtx.unlock();
+            pthread_mutex_unlock(mtx);
         }
 
         // The event object to process
@@ -213,7 +213,7 @@ void LiveStrategy::run() {
             portfolio.update_fill(event_fill);
 
         } else if (event->type == "SCHEDULED") {
-            events::ScheduledEvent event_scheduled = *dynamic_cast<events::ScheduledEvent *>(event.release());
+            events::ScheduledEvent<LiveStrategy> event_scheduled = *dynamic_cast<events::ScheduledEvent<LiveStrategy>*>(event.release());
             // Run the function referenced to in the schedule event
             event_scheduled.run();
         }
@@ -229,28 +229,9 @@ void LiveStrategy::schedule_function(std::function<void(LiveStrategy *)> func, c
         // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
         auto toInsertBefore = std::find_if(heap_eventlist.begin(), heap_eventlist.end(), first_date_greater(i));
         // If no object is found with a later date, the object is put on the end of the heap list
-        heap_eventlist.insert(toInsertBefore, std::make_unique<events::ScheduledEvent>(func, this, i));
+        heap_eventlist.insert(toInsertBefore, std::make_unique<events::ScheduledEvent<LiveStrategy>>(func, this, i));
     }
 }
 
 // Scheduled function check
 void LiveStrategy::check() { std::cout << "Function ran on " << current_time << std::endl; }
-
-// MARK: SCHEDULED EVENT INITIALIZATION
-// Event initialization for ScheduledEvent
-namespace events {
-// Scheduled Event initializer list
-ScheduledEvent::ScheduledEvent(std::function<void(Strategy*)> p_func, Strategy* p_strat,
-                               const BloombergLP::blpapi::Datetime &p_when) :
-        Event("SCHEDULED", p_when),
-        function(std::move(p_func)),
-        instance(p_strat) {}
-// Print function for Scheduled Event
-void ScheduledEvent::what() {
-    std::cout << "Event: SCHEDULED\nDatetime: " << datetime << "\n";
-}
-// Runs the function specified with a call to invoke
-void ScheduledEvent::run() {
-    std::invoke(function, instance);
-}
-}

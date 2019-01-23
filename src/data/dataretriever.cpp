@@ -3,6 +3,7 @@
 //
 
 // Include header
+#include <mutex>
 #include "dataretriever.hpp"
 
 // Constructor to build an instance of the HistoricalDataRetriever for the given type of data.
@@ -76,7 +77,7 @@ HistoricalDataRetriever::pullHistoricalData(const std::vector<std::string> &secu
 
 // Builds the Real Time data retriever for sessions and subscriptions of data. This constructor initializes
 // members and builds the session which will be run when runSubscription is called.
-RealTimeDataRetriever::RealTimeDataRetriever(std::mutex* p_mtx, int p_correlation_id) :
+RealTimeDataRetriever::RealTimeDataRetriever(pthread_mutex_t* p_mtx, int p_correlation_id) :
         correlation_id(p_correlation_id),
         data_handler(&buffer_queue, p_mtx) {
 
@@ -114,7 +115,7 @@ void RealTimeDataRetriever::stopSubscriptions() {
 }
 
 // Constructor for the EventHandler for realtime data
-RealTimeDataHandler::RealTimeDataHandler(std::queue<std::unique_ptr<events::Event>> *p_queue, std::mutex *p_mtx) :
+RealTimeDataHandler::RealTimeDataHandler(std::queue<std::unique_ptr<events::Event>> *p_queue, pthread_mutex_t* p_mtx) :
         queue(p_queue), mtx(p_mtx) {}
 
 // Process the events received through the subscription into the queue, only when the mutex is unlocked. Otherwise,
@@ -136,13 +137,15 @@ bool RealTimeDataHandler::processEvent(const BloombergLP::blpapi::Event &event,
 
                 // Block until the mutex is unlocked so the queue is editable by this.
                 // The mutex is automatically unlocked once this unique lock is destroyed (at end of emplace).
-                std::unique_lock<std::mutex>lock(*mtx);
+                pthread_mutex_lock(mtx);
 
                 // Build the MarketEvent to place onto the queue
-                queue->emplace(std::make_unique<events::MarketEvent>(new events::MarketEvent(
-                                {ticker},
+                queue->emplace(std::unique_ptr<events::MarketEvent>(new events::MarketEvent({ticker},
                                 {{ticker, msg.getElementAsFloat64("LAST_TRADE")}},
                                 msg.getElementAsDatetime("TIME"))));
+
+                // Unblock the threads
+                pthread_mutex_unlock(mtx);
             }
         }
     }

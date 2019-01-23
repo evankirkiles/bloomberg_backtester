@@ -119,7 +119,7 @@ public:
 
 private:
     // The mutex which blocks different threads to keep live data feed containers thread safe
-    std::mutex mtx;
+    pthread_mutex_t* mtx;
     // A live data handler which writes to the event heap
     std::unique_ptr<RealTimeDataRetriever> live_data;
     // The data manager which grabs intraday (minute-level) data up to 140 days into the past
@@ -148,18 +148,26 @@ namespace events {
 // @member function        A reference to the strategy's function which is to be called upon event consumption
 // @member instance        A reference to the strategy itself so its member function can be called
 //
+    template <class T>
     struct ScheduledEvent : public Event {
-        std::function<void(Strategy*)> function;
-        Strategy* instance;
+        std::function<void(T*)> function;
+        T* instance;
 
         // Print function
-        void what() override;
+        void what() override {
+            std::cout << "Event: SCHEDULED\nDatetime: " << datetime << "\n";
+        }
 
         // Constructor for the ScheduledEvent
-        ScheduledEvent(std::function<void(Strategy*)> func, Strategy* strat, const BloombergLP::blpapi::Datetime &when);
+        ScheduledEvent(std::function<void(T*)> p_func, T* p_strat, const BloombergLP::blpapi::Datetime &p_when) :
+            Event("SCHEDULED", p_when),
+            function(std::move(p_func)),
+            instance(p_strat) {}
 
         // Runs the scheduled event
-        void run();
+        void run() {
+            std::invoke(function, instance);
+        }
     };
 
 }
