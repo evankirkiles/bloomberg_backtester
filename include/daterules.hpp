@@ -24,6 +24,9 @@ public:
     // Important: Minutes must be in range of 0 to 59, and hours must be in range of 0 to 3
     static TimeRules market_open(unsigned int hours = 0, unsigned int minutes = 0);
     static TimeRules market_close(unsigned int hours = 0, unsigned int minutes = 0);
+    // Schedule to run every minute with a strange offset. An offset of 1 will space calls by 1 minute (so every
+    // other minute), an offset of 2 will space calls by 2 minute (so ever 3rd minute), etc.
+    static TimeRules every_minute(unsigned int offset = 0);
 
     // Default constructor for timerules
     explicit TimeRules(int type = -1, unsigned int hours = 0, unsigned int minutes = 0);
@@ -32,7 +35,7 @@ public:
     // against the standard closing times and then against all the holidays. If the mode is weekly and
     // there are no more trading days left in the week, then the function is not scheduled for that week.
     // The datetime returned in that case will be in 1970, which must be checked for and not scheduled.
-    BloombergLP::blpapi::Datetime get_time(BloombergLP::blpapi::Datetime date, unsigned int mode) const;
+    std::vector<BloombergLP::blpapi::Datetime> get_time(BloombergLP::blpapi::Datetime date, unsigned int mode) const;
 
 private:
     const int type;

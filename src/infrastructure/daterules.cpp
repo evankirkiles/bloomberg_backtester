@@ -18,9 +18,12 @@ TimeRules TimeRules::market_close(unsigned int hours, unsigned int minutes) {
     if (hours < 0 || hours > 3) { throw std::runtime_error("Invalid hours arg!"); }
     if (minutes < 0 || minutes > 59) { throw std::runtime_error("Invalid minutes arg!"); }
     return TimeRules(date_time_enums::T_MARKET_CLOSE, hours, minutes); }
+TimeRules TimeRules::every_minute(unsigned int offset) {
+    return TimeRules(date_time_enums::T_EVERY_MINUTE, 0, offset);
+}
 
 // Returns the hour, minute, and second of the time for a given date based on the holidays
-BloombergLP::blpapi::Datetime TimeRules::get_time(BloombergLP::blpapi::Datetime date, unsigned int mode) const {
+std::vector<BloombergLP::blpapi::Datetime> TimeRules::get_time(BloombergLP::blpapi::Datetime date, unsigned int mode) const {
     bool noHoliday = false;
     bool earlyClose = false;
     int tries = 0;
@@ -36,7 +39,7 @@ BloombergLP::blpapi::Datetime TimeRules::get_time(BloombergLP::blpapi::Datetime 
                     if (time_holidays::holidays_US.at(date.year() - 1970).at(date.month() - 1).at(date.day()) ==
                         "CLOSED") {
                         date = date_funcs::add_seconds(date, 24 * 60 * 60, true, mode);
-                        if (date.year() == 1970) { return date; }
+                        if (date.year() == 1970) { return {date}; }
 
                         tries++;
                     } else if (time_holidays::holidays_US.at(date.year() - 1970).at(date.month() - 1).at(date.day()) ==
@@ -59,9 +62,9 @@ BloombergLP::blpapi::Datetime TimeRules::get_time(BloombergLP::blpapi::Datetime 
             date.setMinutes(date_time_enums::US_MARKET_OPEN_MINUTE + minutes);
         }
         date.setSeconds(0);
-        return date;
+        return {date};
     // Market close type needs some slight reformatting in case of early close
-    } else {
+    } else if (type == date_time_enums::T_MARKET_CLOSE){
         if (earlyClose) {
             if (date_time_enums::US_MARKET_EARLY_CLOSE_MINUTE - minutes < 0) {
                 date.setHours(date_time_enums::US_MARKET_EARLY_CLOSE_HOUR - 1 - hours);
@@ -71,7 +74,7 @@ BloombergLP::blpapi::Datetime TimeRules::get_time(BloombergLP::blpapi::Datetime 
                 date.setMinutes(date_time_enums::US_MARKET_EARLY_CLOSE_MINUTE - minutes);
             }
             date.setSeconds(0);
-            return date;
+            return {date};
         } else {
             if (date_time_enums::US_MARKET_CLOSE_MINUTE - minutes < 0) {
                 date.setHours(date_time_enums::US_MARKET_CLOSE_HOUR - 1 - hours);
@@ -81,8 +84,11 @@ BloombergLP::blpapi::Datetime TimeRules::get_time(BloombergLP::blpapi::Datetime 
                 date.setMinutes(date_time_enums::US_MARKET_CLOSE_MINUTE - minutes);
             }
             date.setSeconds(0);
-            return date;
+            return {date};
         }
+    // Iterate through every minute and return every single one
+    } else if (type == date_time_enums::T_EVERY_MINUTE) {
+
     }
 }
 
@@ -121,16 +127,19 @@ std::vector<BloombergLP::blpapi::Datetime> DateRules::get_date_times(const TimeR
                 // Make sure the datetime is a weekday, so functions are not run on weekends
                 struct tm tempTime = *localtime(&starttimet);
                 if (tempTime.tm_wday > 0 && tempTime.tm_wday < 6) {
-                    BloombergLP::blpapi::Datetime dateToPush = time_rules.get_time(
+                    std::vector<BloombergLP::blpapi::Datetime> datesToPush = time_rules.get_time(
                             BloombergLP::blpapi::Datetime(
                                     static_cast<unsigned int>(tempTime.tm_year + 1900),
                                     static_cast<unsigned int>(tempTime.tm_mon + 1),
                                     static_cast<unsigned int>(tempTime.tm_mday),
                                     0, 0, 0), (unsigned int) type);
 
-                    // If the date is not bad, then put it into the vector
-                    if (dateToPush.year() != 1970) {
-                        temp.emplace_back(dateToPush);
+                    // Iterate through the retrieved times
+                    for (BloombergLP::blpapi::Datetime datePush : datesToPush) {
+                        // If the date is not bad, then put it into the vector
+                        if (datePush.year() != 1970) {
+                            temp.emplace_back(datePush);
+                        }
                     }
                 }
 
@@ -144,16 +153,19 @@ std::vector<BloombergLP::blpapi::Datetime> DateRules::get_date_times(const TimeR
                 // Make sure the datetime is the right offset date
                 struct tm tempTime = *localtime(&starttimet);
                 if (tempTime.tm_wday == 1 + days_offset) {
-                    BloombergLP::blpapi::Datetime dateToPush = time_rules.get_time(
+                    std::vector<BloombergLP::blpapi::Datetime> datesToPush = time_rules.get_time(
                             BloombergLP::blpapi::Datetime(
                                     static_cast<unsigned int>(tempTime.tm_year + 1900),
                                     static_cast<unsigned int>(tempTime.tm_mon + 1),
                                     static_cast<unsigned int>(tempTime.tm_mday),
                                     0, 0, 0), (unsigned int) type);
 
-                    // If the date is not bad, then put it into the vector
-                    if (dateToPush.year() != 1970) {
-                        temp.emplace_back(dateToPush);
+                    // Iterate through the retrieved times
+                    for (BloombergLP::blpapi::Datetime datePush : datesToPush) {
+                        // If the date is not bad, then put it into the vector
+                        if (datePush.year() != 1970) {
+                            temp.emplace_back(datePush);
+                        }
                     }
                 }
 
@@ -167,17 +179,20 @@ std::vector<BloombergLP::blpapi::Datetime> DateRules::get_date_times(const TimeR
                 // Make sure the datetime is on the right day of the week
                 struct tm tempTime = *localtime(&starttimet);
                  if (tempTime.tm_wday == 5 - days_offset) {
-                    BloombergLP::blpapi::Datetime dateToPush = time_rules.get_time(
-                            BloombergLP::blpapi::Datetime(
-                                    static_cast<unsigned int>(tempTime.tm_year + 1900),
-                                    static_cast<unsigned int>(tempTime.tm_mon + 1),
-                                    static_cast<unsigned int>(tempTime.tm_mday),
-                                    0, 0, 0), (unsigned int) type);
+                     std::vector<BloombergLP::blpapi::Datetime> datesToPush = time_rules.get_time(
+                             BloombergLP::blpapi::Datetime(
+                                     static_cast<unsigned int>(tempTime.tm_year + 1900),
+                                     static_cast<unsigned int>(tempTime.tm_mon + 1),
+                                     static_cast<unsigned int>(tempTime.tm_mday),
+                                     0, 0, 0), (unsigned int) type);
 
-                    // If the date is not bad, then put it into the vector
-                    if (dateToPush.year() != 1970) {
-                        temp.emplace_back(dateToPush);
-                    }
+                     // Iterate through the retrieved times
+                     for (BloombergLP::blpapi::Datetime datePush : datesToPush) {
+                         // If the date is not bad, then put it into the vector
+                         if (datePush.year() != 1970) {
+                             temp.emplace_back(datePush);
+                         }
+                     }
                 }
 
                 starttimet += 24 * 60 * 60;
@@ -190,16 +205,19 @@ std::vector<BloombergLP::blpapi::Datetime> DateRules::get_date_times(const TimeR
                 // Make sure the datetime is on the right day of the week
                 struct tm tempTime = *localtime(&starttimet);
                 if (tempTime.tm_mday == days_offset) {
-                    BloombergLP::blpapi::Datetime dateToPush = time_rules.get_time(
+                    std::vector<BloombergLP::blpapi::Datetime> datesToPush = time_rules.get_time(
                             BloombergLP::blpapi::Datetime(
                                     static_cast<unsigned int>(tempTime.tm_year + 1900),
                                     static_cast<unsigned int>(tempTime.tm_mon + 1),
                                     static_cast<unsigned int>(tempTime.tm_mday),
                                     0, 0, 0), (unsigned int) type);
 
-                    // If the date is not bad, then put it into the vector
-                    if (dateToPush.year() != 1970) {
-                        temp.emplace_back(dateToPush);
+                    // Iterate through the retrieved times
+                    for (BloombergLP::blpapi::Datetime datePush : datesToPush) {
+                        // If the date is not bad, then put it into the vector
+                        if (datePush.year() != 1970) {
+                            temp.emplace_back(datePush);
+                        }
                     }
                 }
 
@@ -229,16 +247,19 @@ std::vector<BloombergLP::blpapi::Datetime> DateRules::get_date_times(const TimeR
                 }
 
                 if (tempTime.tm_mday == daysInMonth - days_offset) {
-                    BloombergLP::blpapi::Datetime dateToPush = time_rules.get_time(
+                    std::vector<BloombergLP::blpapi::Datetime> datesToPush = time_rules.get_time(
                             BloombergLP::blpapi::Datetime(
                                     static_cast<unsigned int>(tempTime.tm_year + 1900),
                                     static_cast<unsigned int>(tempTime.tm_mon + 1),
                                     static_cast<unsigned int>(tempTime.tm_mday),
                                     0, 0, 0), (unsigned int) type);
 
-                    // If the date is not bad, then put it into the vector
-                    if (dateToPush.year() != 1970) {
-                        temp.emplace_back(dateToPush);
+                    // Iterate through the retrieved times
+                    for (BloombergLP::blpapi::Datetime datePush : datesToPush) {
+                        // If the date is not bad, then put it into the vector
+                        if (datePush.year() != 1970) {
+                            temp.emplace_back(datePush);
+                        }
                     }
                 }
 

@@ -119,7 +119,7 @@ public:
 
 private:
     // The mutex which blocks different threads to keep live data feed containers thread safe
-    pthread_mutex_t* mtx;
+    pthread_mutex_t mtx;
     // A live data handler which writes to the event heap
     std::unique_ptr<RealTimeDataRetriever> live_data;
     // The data manager which grabs intraday (minute-level) data up to 140 days into the past

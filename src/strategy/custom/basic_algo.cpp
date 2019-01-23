@@ -8,13 +8,13 @@
 // Initialize the strategy to backtest
 BasicAlgo::BasicAlgo(const BloombergLP::blpapi::Datetime &start, const BloombergLP::blpapi::Datetime &end,
                      unsigned int capital) :
-     Strategy({"AAPL US EQUITY", "SPY US EQUITY", "IBM US EQUITY"}, capital, start, end) {
+     LiveStrategy({"AAPL US EQUITY", "SPY US EQUITY", "IBM US EQUITY"}, capital, start, end) {
 
     // Perform function scheduling here.
     // This lambda is annoying but necessary for downcasting the Strategy to the type of your algorithm when
     // it is known, otherwise cannot have schedule_function declared in Strategy base class.
-    schedule_function([](Strategy* x)->void { auto b = dynamic_cast<BasicAlgo*>(x); if (b) b->check(); },
-            date_rules.week_start(0), TimeRules::market_open(1, 1));
+    schedule_function([](LiveStrategy* x)->void { auto b = dynamic_cast<BasicAlgo*>(x); if (b) b->check(); },
+            date_rules.every_day(), TimeRules::market_close(0, 20));
 
     // Order AAPL, SPY, and IBM
     order_target_percent("AAPL US EQUITY", 0.2);

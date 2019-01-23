@@ -60,6 +60,7 @@ namespace date_time_enums {
 
     const unsigned int T_MARKET_OPEN = 0;
     const unsigned int T_MARKET_CLOSE = 1;
+    const unsigned int T_EVERY_MINUTE = 2;
 
     const unsigned int US_MARKET_OPEN_HOUR = 9;
     const unsigned int US_MARKET_OPEN_MINUTE = 0;

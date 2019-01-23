@@ -51,7 +51,7 @@ struct MarketEvent : public Event {
     const std::unordered_map<std::string, double> data;
 
     // Print function
-    void what();
+    void what() override;
 
     // Constructor for the MarketEvent
     MarketEvent(const std::vector<std::string> &symbols, const std::unordered_map<std::string, double> &data,
@@ -70,7 +70,7 @@ struct SignalEvent : public Event {
     const double percentage;
 
     // Print function
-    void what();
+    void what() override;
 
     // Constructor for the SignalEvent
     SignalEvent(const std::string &symbol, double percentage, const BloombergLP::blpapi::Datetime& when);
@@ -89,7 +89,7 @@ struct OrderEvent : public Event {
     int quantity;
 
     // Print function
-    void what();
+    void what() override;
 
     // Constructor for the OrderEvent
     OrderEvent(const std::string& symbol, int quantity, const BloombergLP::blpapi::Datetime& when);
@@ -110,7 +110,7 @@ struct FillEvent : public Event {
     const double cost, slippage, commission;
 
     // Print function
-    void what();
+    void what() override;
 
     // Constructor for the FillEvent
     FillEvent(const std::string &symbol, int quantity, double cost, double slippage, double commission,

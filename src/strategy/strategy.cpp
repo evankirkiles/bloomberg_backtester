@@ -126,9 +126,10 @@ LiveStrategy::LiveStrategy(const std::vector<std::string> &p_symbol_list,
                            const BloombergLP::blpapi::Datetime &p_start_date,
                            const BloombergLP::blpapi::Datetime &p_end_date) :
         BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
+        mtx(PTHREAD_MUTEX_INITIALIZER),
         data(std::make_shared<HistoricalDataManager>(&current_time, correlation_ids::INTRADAY_REQUEST_CID)),
         execution_handler(&stack_eventqueue, &heap_eventlist, data, &portfolio),
-        live_data(std::make_unique<RealTimeDataRetriever>(mtx)) { }
+        live_data(std::make_unique<RealTimeDataRetriever>(&mtx)) { }
 
 // Runs the live strategy by simply continually updating the current time, checking if the object in the front of
 // the event heap has a datetime less than or equal to the current time, and if so, interpreting that event. Once
@@ -141,21 +142,20 @@ void LiveStrategy::run() {
     // Sets the start date and current time to the current DateTime
     BloombergLP::blpapi::Datetime current = date_funcs::get_now();
     start_date = current;
-    current_time = current;
     portfolio.reset_portfolio(initial_capital, current);
 
     // The datetime incrementing loop which continuously updates the current time
-    for (current_time; date_funcs::is_greater(end_date, current_time); current_time = date_funcs::get_now()) {
-
+    for (current_time = current; date_funcs::is_greater(end_date, current_time); current_time = date_funcs::get_now()) {
 
         // When there are new market events, put them into the heap
         if (!live_data->buffer_queue.empty()) {
-            pthread_mutex_lock(mtx);
+            pthread_mutex_lock(&mtx);
 
             // Pulls all the data from the queue in the live data feed into the event HEAP
             while (!live_data->buffer_queue.empty()) {
                 // Get the first-in market event from the buffer queue
                 std::unique_ptr<events::Event> new_event = std::move(live_data->buffer_queue.front());
+                new_event->what();
                 live_data->buffer_queue.pop();
 
                 // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
@@ -165,7 +165,7 @@ void LiveStrategy::run() {
             }
 
             // Once the buffer queue is empty, unlock the mutex
-            pthread_mutex_unlock(mtx);
+            pthread_mutex_unlock(&mtx);
         }
 
         // The event object to process

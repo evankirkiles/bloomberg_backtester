@@ -21,9 +21,9 @@ MarketEvent::MarketEvent(const std::vector<std::string> &p_symbols,
 
 // Print function for MarketEvent
 void MarketEvent::what() {
-    std::cout << "Event: MARKET\nDatetime: " << datetime << "\nSymbols: ";
-    for (const std::string &i : symbols) { std::cout << i << ", "; };
-    std::cout << "\b\n";
+    std::cout << "Event: MARKET\nDatetime: " << datetime << "\nData: ";
+    for (const std::string &i : symbols) { std::cout << i << "=" << data.at(i) << ", "; };
+    std::cout << "\b\n\n";
 }
 
 // Signal Event initializer list
