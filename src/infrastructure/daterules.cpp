@@ -88,8 +88,34 @@ std::vector<BloombergLP::blpapi::Datetime> TimeRules::get_time(BloombergLP::blpa
         }
     // Iterate through every minute and return every single one
     } else if (type == date_time_enums::T_EVERY_MINUTE) {
-
+        std::vector<BloombergLP::blpapi::Datetime> dates;
+        // Keep adding 60 seconds multiplied by the offset + 1
+        date.setHours(date_time_enums::US_MARKET_OPEN_HOUR);
+        if (earlyClose) {
+            // Do so until the date becomes 1970
+            while (date.year() != 1970 &&
+                (date.hours() < date_time_enums::US_MARKET_EARLY_CLOSE_HOUR-1 ||
+                (date.hours() == date_time_enums::US_MARKET_EARLY_CLOSE_HOUR-1 &&
+                date.minutes() <= date_time_enums::US_MARKET_EARLY_CLOSE_MINUTE-1))) {
+                dates.emplace_back(date);
+                date = date_funcs::add_seconds(date, 60 * (minutes + 1), false, 0);
+            }
+            return dates;
+        } else {
+            // Do so until the date becomes 1970
+            while (date.year() != 1970 &&
+                   (date.hours() < date_time_enums::US_MARKET_CLOSE_HOUR-1 ||
+                    (date.hours() == date_time_enums::US_MARKET_CLOSE_HOUR-1 &&
+                     date.minutes() <= date_time_enums::US_MARKET_CLOSE_MINUTE-1))) {
+                dates.emplace_back(date);
+                date = date_funcs::add_seconds(date, 60 * (minutes + 1), false, 0);
+            }
+            return dates;
+        }
     }
+
+    // If it gets here, there was an error with the scheduling and an error is thrown about the type
+    throw std::runtime_error("Invalid time rules type identification number!");
 }
 
 // Initializes a Date Rules instance to be used for scheduling algorithms at specific dates relative to market times.
@@ -364,7 +390,7 @@ BloombergLP::blpapi::Datetime add_seconds(const BloombergLP::blpapi::Datetime& c
 
 // Function for getting the current time as a Datetime
 BloombergLP::blpapi::Datetime get_now() {
-    std::time_t t = std::time(0);
+    std::time_t t = std::time(nullptr);
     std::tm* now = std::localtime(&t);
     return BloombergLP::blpapi::Datetime((unsigned int)now->tm_year + 1900, (unsigned int)now->tm_mon + 1,
                                              (unsigned int)now->tm_mday, (unsigned int)now->tm_hour,

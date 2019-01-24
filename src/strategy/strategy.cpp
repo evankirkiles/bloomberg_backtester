@@ -155,7 +155,7 @@ void LiveStrategy::run() {
             while (!live_data->buffer_queue.empty()) {
                 // Get the first-in market event from the buffer queue
                 std::unique_ptr<events::Event> new_event = std::move(live_data->buffer_queue.front());
-                new_event->what();
+//                new_event->what();
                 live_data->buffer_queue.pop();
 
                 // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
@@ -226,6 +226,8 @@ void LiveStrategy::schedule_function(std::function<void(LiveStrategy *)> func, c
     // Get the datetimes at which the functions should be scheduled
     std::vector<BloombergLP::blpapi::Datetime> dates = dateRules.get_date_times(timeRules);
     for (const auto& i : dates) {
+        // Only schedule for dates after the start
+        if (date_funcs::is_greater(start_date, i)) { continue; }
         // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
         auto toInsertBefore = std::find_if(heap_eventlist.begin(), heap_eventlist.end(), first_date_greater(i));
         // If no object is found with a later date, the object is put on the end of the heap list

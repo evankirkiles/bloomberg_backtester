@@ -14,7 +14,7 @@ BasicAlgo::BasicAlgo(const BloombergLP::blpapi::Datetime &start, const Bloomberg
     // This lambda is annoying but necessary for downcasting the Strategy to the type of your algorithm when
     // it is known, otherwise cannot have schedule_function declared in Strategy base class.
     schedule_function([](LiveStrategy* x)->void { auto b = dynamic_cast<BasicAlgo*>(x); if (b) b->check(); },
-            date_rules.every_day(), TimeRules::market_close(0, 20));
+            date_rules.every_day(), TimeRules::every_minute());
 
     // Order AAPL, SPY, and IBM
     order_target_percent("AAPL US EQUITY", 0.2);

@@ -54,4 +54,4 @@ message(STATUS "Bloomberg Libraries: ${BLPAPI_LIBRARIES}")
 target_link_libraries(Backtester ${BLPAPI_LIBRARIES})
 
 # Link the executable to pthread
-target_link_libraries(Backtester Threads::Threads curlpp)
+target_link_libraries(Backtester Threads::Threads)
