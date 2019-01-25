@@ -27,6 +27,8 @@ public:
     // Schedule to run every minute with a strange offset. An offset of 1 will space calls by 1 minute (so every
     // other minute), an offset of 2 will space calls by 2 minute (so ever 3rd minute), etc.
     static TimeRules every_minute(unsigned int offset = 0);
+    // Testing schedule function, schedules it for every minute even after hours
+    static TimeRules literally_every_minute();
 
     // Default constructor for timerules
     explicit TimeRules(int type = -1, unsigned int hours = 0, unsigned int minutes = 0);

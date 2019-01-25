@@ -65,6 +65,7 @@ namespace date_time_enums {
     extern const unsigned int T_MARKET_OPEN;
     extern const unsigned int T_MARKET_CLOSE;
     extern const unsigned int T_EVERY_MINUTE;
+    extern const unsigned int T_EVERY_MINUTE_OF_DAY;
 
     extern const unsigned int US_MARKET_OPEN_HOUR;
     extern const unsigned int US_MARKET_OPEN_MINUTE;

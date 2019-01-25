@@ -140,12 +140,12 @@ void LiveStrategy::run() {
     live_data->runSubscription(symbol_list);
 
     // Sets the start date and current time to the current DateTime
-    BloombergLP::blpapi::Datetime current = date_funcs::get_now();
-    start_date = current;
-    portfolio.reset_portfolio(initial_capital, current);
+    BloombergLP::blpapi::Datetime initial = date_funcs::get_now();
+    start_date = initial;
+    portfolio.reset_portfolio(initial_capital, initial);
 
     // The datetime incrementing loop which continuously updates the current time
-    for (current_time = current; date_funcs::is_greater(end_date, current_time); current_time = date_funcs::get_now()) {
+    for (current_time = initial; date_funcs::is_greater(end_date, current_time); current_time = date_funcs::get_now()) {
 
         // When there are new market events, put them into the heap
         if (!live_data->buffer_queue.empty()) {
@@ -155,7 +155,6 @@ void LiveStrategy::run() {
             while (!live_data->buffer_queue.empty()) {
                 // Get the first-in market event from the buffer queue
                 std::unique_ptr<events::Event> new_event = std::move(live_data->buffer_queue.front());
-//                new_event->what();
                 live_data->buffer_queue.pop();
 
                 // Put the scheduled function onto the heap with a reference to the function and the strategy object to call it
@@ -182,7 +181,7 @@ void LiveStrategy::run() {
                 continue;
             } else {
                 // Compare the current date time to the date of the event on the front of the HEAP
-                if (date_funcs::is_greater(current, heap_eventlist.front()->datetime)) {
+                if (date_funcs::is_greater(current_time, heap_eventlist.front()->datetime)) {
                     event = std::move(heap_eventlist.front());
                     heap_eventlist.pop_front();
                 } else {

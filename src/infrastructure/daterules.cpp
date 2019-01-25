@@ -19,8 +19,9 @@ TimeRules TimeRules::market_close(unsigned int hours, unsigned int minutes) {
     if (minutes < 0 || minutes > 59) { throw std::runtime_error("Invalid minutes arg!"); }
     return TimeRules(date_time_enums::T_MARKET_CLOSE, hours, minutes); }
 TimeRules TimeRules::every_minute(unsigned int offset) {
-    return TimeRules(date_time_enums::T_EVERY_MINUTE, 0, offset);
-}
+    return TimeRules(date_time_enums::T_EVERY_MINUTE, 0, offset); }
+TimeRules TimeRules::literally_every_minute() {
+    return TimeRules(date_time_enums::T_EVERY_MINUTE_OF_DAY, 0, 0); }
 
 // Returns the hour, minute, and second of the time for a given date based on the holidays
 std::vector<BloombergLP::blpapi::Datetime> TimeRules::get_time(BloombergLP::blpapi::Datetime date, unsigned int mode) const {
@@ -104,7 +105,7 @@ std::vector<BloombergLP::blpapi::Datetime> TimeRules::get_time(BloombergLP::blpa
         } else {
             // Do so until the date becomes 1970
             while (date.year() != 1970 &&
-                   (date.hours() < date_time_enums::US_MARKET_CLOSE_HOUR-1 ||
+                    (date.hours() < date_time_enums::US_MARKET_CLOSE_HOUR-1 ||
                     (date.hours() == date_time_enums::US_MARKET_CLOSE_HOUR-1 &&
                      date.minutes() <= date_time_enums::US_MARKET_CLOSE_MINUTE-1))) {
                 dates.emplace_back(date);
@@ -112,6 +113,15 @@ std::vector<BloombergLP::blpapi::Datetime> TimeRules::get_time(BloombergLP::blpa
             }
             return dates;
         }
+    // Testing purposes setting, this does every minute, even outside of market hours
+    } else if (type == date_time_enums::T_EVERY_MINUTE_OF_DAY) {
+        std::vector<BloombergLP::blpapi::Datetime> dates;
+        // Do so until the date becomes 1970
+        while (date.year() != 1970) {
+            dates.emplace_back(date);
+            date = date_funcs::add_seconds(date, 60 * (minutes + 1), false, 0);
+        }
+        return dates;
     }
 
     // If it gets here, there was an error with the scheduling and an error is thrown about the type
