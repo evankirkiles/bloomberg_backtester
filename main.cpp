@@ -10,8 +10,7 @@
 int main(int argc, char* argv[]) {
 
     // Run a Basic Algo
-    BasicAlgo alg(date_funcs::get_now(), BloombergLP::blpapi::Datetime(2019, 1, 31, 0, 0, 0), 1000000);
-
+    BasicAlgo alg(BloombergLP::blpapi::Datetime(2014, 1, 31, 0, 0, 0), BloombergLP::blpapi::Datetime(2016, 1, 31, 0, 0, 0), 1000000);
     // Run the algorithm
     alg.run();
 

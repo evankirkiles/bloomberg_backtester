@@ -240,7 +240,7 @@ std::vector<BloombergLP::blpapi::Datetime> DateRules::get_date_times(const TimeR
             while (starttimet < endtimet) {
                 // Make sure the datetime is on the right day of the week
                 struct tm tempTime = *localtime(&starttimet);
-                if (tempTime.tm_mday == days_offset) {
+                if (tempTime.tm_mday - 1 == days_offset) {
                     std::vector<BloombergLP::blpapi::Datetime> datesToPush = time_rules.get_time(
                             BloombergLP::blpapi::Datetime(
                                     static_cast<unsigned int>(tempTime.tm_year + 1900),
@@ -282,7 +282,7 @@ std::vector<BloombergLP::blpapi::Datetime> DateRules::get_date_times(const TimeR
                     default: break;
                 }
 
-                if (tempTime.tm_mday == daysInMonth - days_offset) {
+                if (tempTime.tm_mday - 1 == daysInMonth - days_offset) {
                     std::vector<BloombergLP::blpapi::Datetime> datesToPush = time_rules.get_time(
                             BloombergLP::blpapi::Datetime(
                                     static_cast<unsigned int>(tempTime.tm_year + 1900),
@@ -436,6 +436,5 @@ bool is_greater(const BloombergLP::blpapi::Datetime& first, const BloombergLP::b
                 }
             }
         }
-}
-
+    }
 }

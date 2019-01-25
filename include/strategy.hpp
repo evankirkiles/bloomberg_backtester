@@ -53,6 +53,9 @@ protected:
     const unsigned int initial_capital;
     BloombergLP::blpapi::Datetime start_date, end_date, current_time;
 
+    // Basic map of variables which one would like to maintain between function calls
+    std::map<std::string, double> context;
+
     // Run function members, for breaking loop and keeping track of current Event position
     bool running = false;
 
