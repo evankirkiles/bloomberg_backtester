@@ -89,11 +89,12 @@ public:
     friend class StrategyFixture_schedule_functions_Test;
     friend class StrategyFixture_run_Test;
 
+protected:
+    // The Data Manager
+    std::shared_ptr<DataManager> data;
 private:
     // Type of the strategy ("HISTORICAL" only one supported currently)
     const std::string backtest_type;
-    // The Data Manager
-    std::shared_ptr<DataManager> data;
     // Execution Handler to manage signal and order events
     ExecutionHandler execution_handler;
 };
@@ -120,13 +121,14 @@ public:
     // being built after all market events.
     void schedule_function(std::function<void(LiveStrategy*)> func, const DateRules& dateRules, const TimeRules& timeRules);
 
+protected:
+    // The data manager which grabs intraday (minute-level) data up to 140 days into the past
+    std::shared_ptr<DataManager> data;
 private:
     // The mutex which blocks different threads to keep live data feed containers thread safe
     pthread_mutex_t mtx;
     // A live data handler which writes to the event heap
     std::unique_ptr<RealTimeDataRetriever> live_data;
-    // The data manager which grabs intraday (minute-level) data up to 140 days into the past
-    std::shared_ptr<DataManager> data;
     // Execution Handler to manage signal and order events
     ExecutionHandler execution_handler;
 };

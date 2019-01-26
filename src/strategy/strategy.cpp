@@ -127,7 +127,7 @@ LiveStrategy::LiveStrategy(const std::vector<std::string> &p_symbol_list,
                            const BloombergLP::blpapi::Datetime &p_end_date) :
         BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
         mtx(PTHREAD_MUTEX_INITIALIZER),
-        data(std::make_shared<HistoricalDataManager>(&current_time, correlation_ids::INTRADAY_REQUEST_CID)),
+        data(std::make_shared<HistoricalDataManager>(&current_time)),
         execution_handler(&stack_eventqueue, &heap_eventlist, data, &portfolio),
         live_data(std::make_unique<RealTimeDataRetriever>(&mtx)) { }
 

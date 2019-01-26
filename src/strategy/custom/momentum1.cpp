@@ -27,6 +27,10 @@ ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const
 
 // The test function for the Basic Algo
 void ALGO_Momentum1::rebalance() {
+    // Pull the past [lookback] of data from Bloomberg
+    std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> prices =
+            data->history(symbol_list, {"PX_OPEN"}, (unsigned int)context["lookback"], "daily");
+
     // First sell all positions
     for (const std::string& symbol : symbol_list)
         order_target_percent(symbol, 0);
