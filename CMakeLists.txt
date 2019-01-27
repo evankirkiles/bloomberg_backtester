@@ -12,7 +12,11 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # Bloomberg library includes
-include_directories("C:\\blp\\C++\\include")
+if (APPLE)
+    include_directories("/Users/samkirkiles/Downloads/blpapi_cpp_3.8.1.1/include")
+else()
+    include_directories("C:\\blp\\C++\\include")
+endif()
 
 # Also include project level directories
 include_directories(src include test)

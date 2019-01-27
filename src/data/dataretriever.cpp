@@ -34,7 +34,7 @@ HistoricalDataRetriever::~HistoricalDataRetriever() { session->stop(); }
 // @param securities       A vector of the securities to request data from, ex. "IBM US EQUITY"
 // @param start_date       The date from which to begin pulling data.
 // @param end_date         The upper limit on pulled dates.
-// @param fields           The fields of data desired, ex. "PX_LAST", "OPEN"
+// @param fields           The fields of data desired, ex. "PX_LAST", "PX_OPEN"
 // @param frequency        The frequency of the data, ex. "DAILY", "MONTHLY"
 //
 std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>>

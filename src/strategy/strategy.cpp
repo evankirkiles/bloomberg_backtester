@@ -25,6 +25,13 @@ void BaseStrategy::order_target_percent(const std::string &symbol, double percen
     stack_eventqueue.emplace(std::make_unique<events::SignalEvent>(symbol, percent, current_time));
 }
 
+// Logs a message to the console with the current time
+void BaseStrategy::log(const std::string &message) { std::cout << "[" << current_time << "] " << message << std::endl; }
+// Logs a message to Slack with the current time (to be done later)
+void BaseStrategy::message(const std::string &message) {
+    log(message);
+}
+
 // Builds the Strategy object with the given initial capital and start and end. To reformat the strategy,
 // probably should just reconstruct it.
 Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
