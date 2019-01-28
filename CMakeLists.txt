@@ -40,7 +40,8 @@ set(BACKTEST_SRCS
 
 # Initialize custom algorithms here
 set(ALGOS
-        src/strategy/custom/basic_algo.cpp)
+        src/strategy/custom/basic_algo.cpp
+        src/strategy/custom/momentum1.cpp)
 
 # Build the backtester executable
 add_executable(Backtester

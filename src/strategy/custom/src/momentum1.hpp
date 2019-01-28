@@ -32,7 +32,7 @@ private:
     // Holds the weights in each algo
     std::unordered_map<std::string, std::unordered_map<std::string, double>> symbolspecifics;
     // Calculates the slope and intercept beginning at a certain value until the end
-    std::pair<double, double> regression(std::vector<double> x);
+    std::pair<double, double> calcreg(std::vector<double> x);
     // Calcualtes the volatility scalar for each stock
     std::unordered_map<std::string, double> volatilityscalars();
 };

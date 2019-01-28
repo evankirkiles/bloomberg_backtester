@@ -64,9 +64,9 @@ namespace date_time_enums {
     const unsigned int T_EVERY_MINUTE_OF_DAY = 3;
 
     const unsigned int US_MARKET_OPEN_HOUR = 9;
-    const unsigned int US_MARKET_OPEN_MINUTE = 0;
+    const unsigned int US_MARKET_OPEN_MINUTE = 30;
     const unsigned int US_MARKET_CLOSE_HOUR = 16;
-    const unsigned int US_MARKET_CLOSE_MINUTE = 30;
+    const unsigned int US_MARKET_CLOSE_MINUTE = 0;
 
     const unsigned int US_MARKET_EARLY_CLOSE_HOUR = 13;
     const unsigned int US_MARKET_EARLY_CLOSE_MINUTE = 0;
