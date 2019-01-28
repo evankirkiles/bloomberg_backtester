@@ -18,6 +18,7 @@ ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const
     context["multiple"] = 5.0;                                // 1% of return translates to what weight? e.g. 5%
     context["profittake"] = 1.96;                             // Take profits when breaks out of 95% Bollinger Band
     context["slopemin"] = 0.252;                              // Minimum slope on which to be trading on
+    context["dailyvolatilitytarget"] = 0.025;                 // Target daily volatility, in percent
 
     // Dictionary of weights, set for each security
     for (const std::string& sym : symbol_list) {
@@ -28,12 +29,27 @@ ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const
     // Perform function scheduling here.
     // This lambda is annoying but necessary for downcasting the Strategy to the type of your algorithm when
     // it is known, otherwise cannot have schedule_function declared in Strategy base class.
-    schedule_function([](Strategy* x)->void { auto b = dynamic_cast<ALGO_Momentum1*>(x); if (b) b->rebalance(); },
+
+    // Every 5 minutes during market hours
+    // 1. Checks for any exit conditions in securities where weight != 0
+    schedule_function([](Strategy* x)->void { auto a = dynamic_cast<ALGO_Momentum1*>(x); if (a) a->exitconditions(); },
+                      date_rules.every_day(), TimeRules::every_minute(4));
+
+    // 28 minutes after market opens
+    // 2. Performs the regression and calculates the weights for any new trends
+    schedule_function([](Strategy* x)->void { auto b = dynamic_cast<ALGO_Momentum1*>(x); if (b) b->regression(); },
                       date_rules.every_day(), TimeRules::market_open(0, 28));
+
+    // 30 minutes after market opens
+    // 3. Performs trades and notifies us of any required buys/sells
+    schedule_function([](Strategy* x)->void { auto c = dynamic_cast<ALGO_Momentum1*>(x); if (c) c->trade(); },
+                      date_rules.every_day(), TimeRules::market_open(0, 30));
 }
 
-// The test function for the Basic Algo
-void ALGO_Momentum1::rebalance() {
+// Checks for new trends available to go in on. Conditions:
+//  1. Normalized slope over past [lookback] days is greater than [minslope]
+//  2. Price has crossed the regression line.
+void ALGO_Momentum1::regression() {
     // Pull the past [lookback] of data from Bloomberg
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> prices =
             data->history(symbol_list, {"PX_OPEN"}, (unsigned int) std::ceil(context["lookback"]*1.4), "daily");
@@ -80,7 +96,7 @@ void ALGO_Momentum1::rebalance() {
                 // Set the weight to be ordered at the end of the day, and clear the stopprice
                 symbolspecifics[symbol]["stopprice"] = nan("idk");
                 symbolspecifics[symbol]["weight"] = slope;
-                log("---------- Long  a = " + (slope * 100) + "% for " + symbol);
+                log(std::string("---------- Long  a = ") + (slope * 100) + "% for " + symbol);
             // If the price is greater than the profit take Bollinger Band and we are long in it
             } else if (delta1 > context["profittake"] * sd && symbolspecifics[symbol]["weight"] > 0) {
                 // Exit the position by setting the weight to 0
@@ -94,13 +110,97 @@ void ALGO_Momentum1::rebalance() {
                 // Set the weight to be ordered at the end of the day, and clear the stopprice
                 symbolspecifics[symbol]["stopprice"] = nan("idk");
                 symbolspecifics[symbol]["weight"] = slope;
-                log("---------- Short  a = " + (slope * 100) + "% for " + symbol);
-                // If the price is greater than the profit take Bollinger Band and we are long in it
+                log(std::string("---------- Short  a = ") + (slope * 100) + "% for " + symbol);
+                // If the price is less than the profit take Bollinger Band and we are short in it
             } else if (delta1 < -context["profittake"] * sd && symbolspecifics[symbol]["weight"] < 0) {
                 // Exit the position by setting the weight to 0
                 symbolspecifics[symbol]["weight"] = 0.0;
                 log("---- Exit short in " + symbol);
             }
+        }
+    }
+}
+
+// Exits positions where the trend seems to be fading. Conditions:
+//  1. Stop price is hit (the estimated price before the lookback period according to the regression)
+void ALGO_Momentum1::exitconditions() {
+    // Again, iterate through the symbols to perform the calculations for each stock
+    for (const std::string& symbol : symbol_list) {
+        // Get the mean price over the past couple of days as a more robust statistic
+        std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> prices =
+                data->history(symbol_list, {"PX_LAST"}, 4, "daily");
+        double price=0;
+        for (auto &iter : prices->at(symbol).data) {
+            price += iter.second["PX_LAST"];
+        }
+
+        // Now calculate the stop loss percentage as the estimated return over the lookback
+        double stoploss = abs(symbolspecifics[symbol]["weight"] * context["lookback"] / 252.0) + 1;
+
+        // Check if we should exit depending on whether we are long or short
+        if (symbolspecifics[symbol]["weight"] > 0) {
+            // If the stop price is negative, we need to recalculate it
+            if (symbolspecifics[symbol]["stopprice"] < 0) {
+                symbolspecifics[symbol]["stopprice"] = price / stoploss;
+            // Otherwise, check the current price against the stop price
+            } else {
+                // Only update the stop price if it has increased so we are safer and do not have a low stop price.
+                symbolspecifics[symbol]["stopprice"] = std::max(price/stoploss, symbolspecifics[symbol]["stopprice"]);
+                // Make sure the price is outside of the stop price anyways, if not then sell all shares
+                if (price < symbolspecifics[symbol]["stopprice"]) {
+                    // Notify us of the exiting of the position
+                    message("x Long stop loss for " + symbol+ ", sell all shares.");
+                    symbolspecifics[symbol]["weight"] = 0;
+                    // We just use order percent here because we want to exit the trend immediately (not end of day)
+                    order_target_percent(symbol, 0);
+                }
+            }
+        } else if (symbolspecifics[symbol]["weight"] < 0) {
+            // If the stop price is negative, we need to recalculate it
+            if (symbolspecifics[symbol]["stopprice"] < 0) {
+                symbolspecifics[symbol]["stopprice"] = price / stoploss;
+                // Otherwise, check the current price against the stop price
+            } else {
+                // Only update the stop price if it has decreased so we are safer and do not have a high stop price.
+                symbolspecifics[symbol]["stopprice"] = std::min(price/stoploss, symbolspecifics[symbol]["stopprice"]);
+                // Make sure the price is outside of the stop price anyways, if not then sell all shares
+                if (price > symbolspecifics[symbol]["stopprice"]) {
+                    // Notify us of the exiting of the position
+                    message("x Short stop loss for " + symbol+ ", sell all shares.");
+                    symbolspecifics[symbol]["weight"] = 0;
+                    // We just use order percent here because we want to exit the trend immediately (not end of day)
+                    order_target_percent(symbol, 0);
+                }
+            }
+        } else {
+            symbolspecifics[symbol]["stopprice"] = nan("idk");
+        }
+    }
+}
+
+// Performs trades based on the weights in our symbolspecifics object.
+// Note the volatility scalar which changes our positions based on how volatile the asset is.
+void ALGO_Momentum1::trade() {
+    // First, calculate the volatility scalar
+    std::unordered_map<std::string, double> vol_mult = volatilityscalars();
+    // Also keep track of how many securities we do not have a position in
+    int nopositions = 0;
+    for (const std::string& sym : symbol_list) { if (symbolspecifics[sym]["weight"] == 0) { nopositions++; } }
+
+    // Now iterate through the weights and perform the trades
+    for (const std::string& symbol : symbol_list) {
+        if (symbolspecifics[symbol]["weight"] == 0) {
+            // Log the exiting of the position
+            message("x Exit position in " + symbol);
+            order_target_percent(symbol, 0);
+        } else if (symbolspecifics[symbol]["weight"] > 0) {
+            double percent = (std::min(symbolspecifics[symbol]["weight"] * context["multiple"], context["maxlever"]) / nopositions) * vol_mult[symbol];
+            message(std::string("^ Go long ") + percent + "% in " + symbol);
+            order_target_percent(symbol, percent);
+        } else if (symbolspecifics[symbol]["weight"] < 0) {
+            double percent = (std::max(symbolspecifics[symbol]["weight"] * context["multiple"], -context["maxlever"]) / nopositions) * vol_mult[symbol];
+            message(std::string("v Go short ") + percent + "% in " + symbol);
+            order_target_percent(symbol, percent);
         }
     }
 }
@@ -122,4 +222,39 @@ std::pair<double, double> ALGO_Momentum1::regression(std::vector<double> x) {
     slope = (y.size()*xySum - xSum*ySum) / (y.size()*xxSum - xSum*xSum);
     intercept = (ySum - slope*xSum) / y.size();
     return std::make_pair(slope, intercept);
+}
+
+// Calculates the volatility scalar for each stock, based on the standard deviation of the log returns.
+std::unordered_map<std::string, double> ALGO_Momentum1::volatilityscalars() {
+    // First, retrieve all the prices over the lookback
+    std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> prices =
+            data->history(symbol_list, {"PX_OPEN"}, (unsigned int) std::ceil(context["lookback"]*1.4), "daily");
+
+    // The map to return with each symbol's volatility scalar
+    std::unordered_map<std::string, double> vol_mult;
+    // Iterate through each symbol to perform logic for each
+    for (const std::string& symbol : symbol_list) {
+        // First build vectors for each symbol
+        std::vector<double> x;
+        auto iter = prices->at(symbol).data.begin();
+        double previous = 0;
+        for (std::advance(iter, (prices->at(symbol).data.size() - (int) context["lookback"]));
+             iter != prices->at(symbol).data.end(); iter++) {
+            double val = (*iter).second["PX_OPEN"];
+            if (previous != 0) { x.emplace_back(std::log(val) - previous); }
+            previous = std::log(val);
+        }
+
+        // Now find the exponentially weighted moving standard deviation of the last month of log differences in x
+        double alpha = 2.0 / (21 + 1);
+        std::vector<double> ema = x;
+        std::vector<double> ewmstd = {0};
+        // Then we can calculate the ewmst recursively
+        for (int i = 1; i < ema.size(); i++) {
+            ema[i] = x[i] + (1 - alpha)*ema[i-1];
+            ewmstd.emplace_back((1 - alpha)*(ema[i-1] + alpha*pow(x[i]-ema[i-1], 2)));
+        }
+        // Finally, return the last value of the ewmstd
+        vol_mult[symbol] = context["dailyvolatilitytarget"] / sqrt(ewmstd[ewmstd.size() - 1]);
+    }
 }
