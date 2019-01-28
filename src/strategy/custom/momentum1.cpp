@@ -140,7 +140,7 @@ void ALGO_Momentum1::exitconditions() {
         // Check if we should exit depending on whether we are long or short
         if (symbolspecifics[symbol]["weight"] > 0) {
             // If the stop price is negative, we need to recalculate it
-            if (symbolspecifics[symbol]["stopprice"] < 0) {
+            if (symbolspecifics[symbol]["stopprice"] == nan("idk") || symbolspecifics[symbol]["stopprice"] < 0) {
                 symbolspecifics[symbol]["stopprice"] = price / stoploss;
             // Otherwise, check the current price against the stop price
             } else {
@@ -157,7 +157,7 @@ void ALGO_Momentum1::exitconditions() {
             }
         } else if (symbolspecifics[symbol]["weight"] < 0) {
             // If the stop price is negative, we need to recalculate it
-            if (symbolspecifics[symbol]["stopprice"] < 0) {
+            if (symbolspecifics[symbol]["stopprice"] == nan("idk") || symbolspecifics[symbol]["stopprice"] < 0) {
                 symbolspecifics[symbol]["stopprice"] = price / stoploss;
                 // Otherwise, check the current price against the stop price
             } else {
