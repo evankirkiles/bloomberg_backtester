@@ -27,6 +27,8 @@ public:
     void exitconditions();
     // Trade execution goes here
     void trade();
+    // Performance reporting goes here
+    void reportperformance();
 
 private:
     // Holds the weights in each algo

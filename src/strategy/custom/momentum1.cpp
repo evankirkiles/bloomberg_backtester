@@ -25,6 +25,7 @@ ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const
     // Dictionary of weights, set for each security
     for (const std::string& sym : symbol_list) {
         symbolspecifics[sym]["weight"] = 0.0;
+        symbolspecifics[sym]["bought"] = 1;
         symbolspecifics[sym]["stopprice"] = nan("idk");
     }
 
@@ -46,13 +47,17 @@ ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const
     // 3. Performs trades and notifies us of any required buys/sells
     schedule_function([](Strategy* x)->void { auto c = dynamic_cast<ALGO_Momentum1*>(x); if (c) c->trade(); },
                       date_rules.every_day(), TimeRules::market_open(0, 30));
+
+    // At close of every day
+    // 4. Reports performance of portfolio
+    schedule_function([](Strategy* x)->void { auto d = dynamic_cast<ALGO_Momentum1*>(x); if (d) d->reportperformance(); },
+                      date_rules.every_day(), TimeRules::market_close(0, 0));
 }
 
 // Checks for new trends available to go in on. Conditions:
 //  1. Normalized slope over past [lookback] days is greater than [minslope]
 //  2. Price has crossed the regression line.
 void ALGO_Momentum1::regression() {
-    log("progress");
     // Pull the past [lookback] of data from Bloomberg
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> prices =
             data->history(symbol_list, {"PX_OPEN"}, (unsigned int) std::ceil(context["lookback"]*1.6), "DAILY");
@@ -84,15 +89,15 @@ void ALGO_Momentum1::regression() {
         // Also get the standard deviation of the price series
         const double sd = sqrt((sum_x2 / context["lookback"]) - ((sum_x1 / context["lookback"]) * (sum_x1 / context["lookback"])));
 
-        log("1");
-
         // If long but the slope turns down, exit
         if (symbolspecifics[symbol]["weight"] > 0 && slope < 0) {
             symbolspecifics[symbol]["weight"] = 0.0;
+            symbolspecifics[symbol]["bought"] = 0;
             log("v Slope turned bull " + symbol);
         // If shortbut the slope turns up, exit
         } else if (symbolspecifics[symbol]["weight"] < 0 && slope > 0) {
             symbolspecifics[symbol]["weight"] = 0.0;
+            symbolspecifics[symbol]["bought"] = 0;
             log("v Slope turned bear " + symbol);
         }
 
@@ -103,11 +108,13 @@ void ALGO_Momentum1::regression() {
                 // Set the weight to be ordered at the end of the day, and clear the stopprice
                 symbolspecifics[symbol]["stopprice"] = nan("idk");
                 symbolspecifics[symbol]["weight"] = slope;
+                symbolspecifics[symbol]["bought"] = 0;
                 log(std::string("---------- Long  a = ") + std::to_string(slope * 100) + "% for " + symbol);
             // If the price is greater than the profit take Bollinger Band and we are long in it
             } else if (delta1 > context["profittake"] * sd && symbolspecifics[symbol]["weight"] > 0) {
                 // Exit the position by setting the weight to 0
                 symbolspecifics[symbol]["weight"] = 0.0;
+                symbolspecifics[symbol]["bought"] = 0;
                 log("---- Exit long in " + symbol);
             }
         // If the trend is down enough
@@ -117,17 +124,17 @@ void ALGO_Momentum1::regression() {
                 // Set the weight to be ordered at the end of the day, and clear the stopprice
                 symbolspecifics[symbol]["stopprice"] = nan("idk");
                 symbolspecifics[symbol]["weight"] = slope;
+                symbolspecifics[symbol]["bought"] = 0;
                 log(std::string("---------- Short  a = ") + std::to_string(slope * 100) + "% for " + symbol);
                 // If the price is less than the profit take Bollinger Band and we are short in it
             } else if (delta1 < -context["profittake"] * sd && symbolspecifics[symbol]["weight"] < 0) {
                 // Exit the position by setting the weight to 0
                 symbolspecifics[symbol]["weight"] = 0.0;
+                symbolspecifics[symbol]["bought"] = 0;
                 log("---- Exit short in " + symbol);
             }
         }
     }
-
-    log("2");
 }
 
 // Exits positions where the trend seems to be fading. Conditions:
@@ -160,6 +167,7 @@ void ALGO_Momentum1::exitconditions() {
                     // Notify us of the exiting of the position
                     message("x Long stop loss for " + symbol+ ", sell all shares.");
                     symbolspecifics[symbol]["weight"] = 0;
+                    symbolspecifics[symbol]["bought"] = 0;
                     // We just use order percent here because we want to exit the trend immediately (not end of day)
                     order_target_percent(symbol, 0);
                 }
@@ -177,6 +185,7 @@ void ALGO_Momentum1::exitconditions() {
                     // Notify us of the exiting of the position
                     message("x Short stop loss for " + symbol+ ", sell all shares.");
                     symbolspecifics[symbol]["weight"] = 0;
+                    symbolspecifics[symbol]["bought"] = 0;
                     // We just use order percent here because we want to exit the trend immediately (not end of day)
                     order_target_percent(symbol, 0);
                 }
@@ -194,21 +203,33 @@ void ALGO_Momentum1::trade() {
     std::unordered_map<std::string, double> vol_mult = volatilityscalars();
     // Also keep track of how many securities we do not have a position in
     int nopositions = 0;
-    for (const std::string& sym : symbol_list) { if (symbolspecifics[sym]["weight"] == 0) { nopositions++; } }
+    for (const std::string& sym : symbol_list) { if (symbolspecifics[sym]["weight"] != 0) { nopositions++; } }
 
     // Now iterate through the weights and perform the trades
     for (const std::string& symbol : symbol_list) {
-        if (symbolspecifics[symbol]["weight"] == 0) {
-            // Log the exiting of the position
-            order_target_percent(symbol, 0);
-        } else if (symbolspecifics[symbol]["weight"] > 0) {
-            double percent = (std::min(symbolspecifics[symbol]["weight"] * context["multiple"], context["maxlever"]) / nopositions) * vol_mult[symbol];
-            message(std::string("^ Go long ") + std::to_string(percent) + "% in " + symbol);
-            order_target_percent(symbol, percent);
-        } else if (symbolspecifics[symbol]["weight"] < 0) {
-            double percent = (std::max(symbolspecifics[symbol]["weight"] * context["multiple"], -context["maxlever"]) / nopositions) * vol_mult[symbol];
-            message(std::string("v Go short ") + std::to_string(percent) + "% in " + symbol);
-            order_target_percent(symbol, percent);
+        // Only check if the symbol hasn't been bought yet
+        if (symbolspecifics[symbol]["bought"] == 0) {
+            if (symbolspecifics[symbol]["weight"] == 0) {
+                // Log the exiting of the position
+                order_target_percent(symbol, 0);
+                symbolspecifics[symbol]["bought"] = 1;
+            } else if (symbolspecifics[symbol]["weight"] > 0) {
+                double percent =
+                        (std::fmin(symbolspecifics[symbol]["weight"] * context["multiple"], context["maxleverage"]) /
+                         nopositions) * vol_mult[symbol];
+                if (std::isnan(percent)) { percent = 0; }
+                message(std::string("^ Go long ") + std::to_string(percent) + "% in " + symbol);
+                order_target_percent(symbol, percent);
+                symbolspecifics[symbol]["bought"] = 1;
+            } else if (symbolspecifics[symbol]["weight"] < 0) {
+                double percent =
+                        (std::fmax(symbolspecifics[symbol]["weight"] * context["multiple"], -context["maxleverage"]) /
+                         nopositions) * vol_mult[symbol];
+                if (std::isnan(percent)) { percent = 0; }
+                message(std::string("v Go short ") + std::to_string(percent) + "% in " + symbol);
+                order_target_percent(symbol, percent);
+                symbolspecifics[symbol]["bought"] = 1;
+            }
         }
     }
 }
@@ -236,12 +257,12 @@ std::pair<double, double> ALGO_Momentum1::calcreg(std::vector<double> x) {
 std::unordered_map<std::string, double> ALGO_Momentum1::volatilityscalars() {
     // First, retrieve all the prices over the lookback
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> prices =
-            data->history(symbol_list, {"PX_OPEN"}, (unsigned int) std::ceil(context["lookback"]*1.6), "DAILY");
+            data->history(symbol_list, {"PX_OPEN"}, (unsigned int) std::ceil(context["lookback"] * 1.6), "DAILY");
 
     // The map to return with each symbol's volatility scalar
     std::unordered_map<std::string, double> vol_mult;
     // Iterate through each symbol to perform logic for each
-    for (const std::string& symbol : symbol_list) {
+    for (const std::string &symbol : symbol_list) {
         // First build vectors for each symbol
         std::vector<double> x;
         auto iter = prices->at(symbol).data.begin();
@@ -259,11 +280,19 @@ std::unordered_map<std::string, double> ALGO_Momentum1::volatilityscalars() {
         std::vector<double> ewmstd = {0};
         // Then we can calculate the ewmst recursively
         for (int i = 1; i < ema.size(); i++) {
-            ema[i] = x[i] + (1 - alpha)*ema[i-1];
-            ewmstd.emplace_back((1 - alpha)*(ema[i-1] + alpha*pow(x[i]-ema[i-1], 2)));
+            ema[i] = x[i] + (1 - alpha) * ema[i - 1];
+            ewmstd.emplace_back((1 - alpha) * (ema[i - 1] + alpha * pow(x[i] - ema[i - 1], 2)));
         }
         // Finally, return the last value of the ewmstd
         vol_mult[symbol] = context["dailyvolatilitytarget"] / sqrt(ewmstd[ewmstd.size() - 1]);
     }
     return vol_mult;
+}
+
+// Reports the performance of the algorithm at end of every day.
+void ALGO_Momentum1::reportperformance() {
+    // Log the portfolio status
+    log(std::string("Return: ") + std::to_string(portfolio.current_holdings[portfolio_fields::EQUITY_CURVE]) +
+        std::string(", Value: ") + std::to_string(portfolio.current_holdings[portfolio_fields::TOTAL_HOLDINGS]) +
+        std::string(", Held Cash: ") + std::to_string(portfolio.current_holdings[portfolio_fields::HELD_CASH]));
 }
