@@ -14,6 +14,11 @@ ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const
                   "DBA US EQUITY"},
                  capital, start, end) {
 
+    // Preload the data so do not have to do so many Bloomberg API requests
+    log("Pulling entire backtest data.");
+    dynamic_cast<HistoricalDataManager*>(data.get())->preload(symbol_list, {"PX_OPEN", "PX_LAST"}, start, end, 127);
+    log("Backtest data pull complete.");
+
     // Perform constant declarations and definitions here.
     context["lookback"] = 126;                                // The lookback for the moving average
     context["maxleverage"] = 0.9;                             // The maximum leverage allowed

@@ -3,6 +3,8 @@
 //
 
 // Include the correlated header
+#include <include/data.hpp>
+
 #include "data.hpp"
 
 // Constructor that sets up the connection to the Bloomberg Data API so data can be pulled.
@@ -45,12 +47,35 @@ std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> Historica
             const std::vector<std::string> &symbols, const std::vector<std::string> &fields, unsigned int timeunitsback,
             const std::string &frequency) {
 
-    // Simulate a default argument for overridden function
-    std::string freq = (frequency == "RECENT") ? "DAILY" : frequency;
     // Find the date N days back from the current dates
     BloombergLP::blpapi::Datetime beginDate = date_funcs::add_seconds(*currentTime, 24 * 60 * 60 * timeunitsback * -1);
 
-    // Simply tunnels the request through to the HistoricalDataRetriever, filling in the end date as the current date of
-    // the local pointer to the simulated current date.
-    return std::move(dr.pullHistoricalData(symbols, beginDate, *currentTime, fields, freq));
+    if (!preloaded) {
+        // Simulate a default argument for overridden function
+        std::string freq = (frequency == "RECENT") ? "DAILY" : frequency;
+        // Simply tunnels the request through to the HistoricalDataRetriever, filling in the end date as the current date of
+        // the local pointer to the simulated current date.
+        return std::move(dr.pullHistoricalData(symbols, beginDate, *currentTime, fields, freq));
+    } else {
+        // Temporary object to return
+        std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> toReturn = {};
+        // Have to iterate through all the SymbolHistoricalData objects and trim copies of them to the requested dates and fields.
+        for(const std::string& symb : symbols) {
+            toReturn->at(symb) = preloaded_data->at(symb).trim(beginDate, *currentTime);
+        }
+        return std::move(toReturn);
+    }
+}
+
+// Pulls history data from Bloomberg for the entire backtest which will then be used by the history function.
+void HistoricalDataManager::preload(const std::vector<std::string> &symbols, const std::vector<std::string> &fields,
+                                    const BloombergLP::blpapi::Datetime &start,
+                                    const BloombergLP::blpapi::Datetime &end, unsigned int maxlookback,
+                                    const std::string &frequency) {
+
+    // Find the earliest possible data to be requested
+    BloombergLP::blpapi::Datetime beginDate = date_funcs::add_seconds(start, 24 * 60 * 60 * maxlookback * -1);
+    // Beginning at the found date, pull the historical data into the container
+    preloaded_data = std::move(dr.pullHistoricalData(symbols, beginDate, end, fields, frequency));
+    preloaded = true;
 }

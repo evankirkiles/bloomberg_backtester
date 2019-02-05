@@ -14,6 +14,7 @@
 // Project includes
 #include "constants.hpp"
 #include "events.hpp"
+#include "daterules.hpp"
 
 // Inline function to parse the Bloomberg Historical Data formatted date from a normal Datetime.
 inline std::string get_date_formatted(const BloombergLP::blpapi::Datetime& date) {
@@ -33,6 +34,22 @@ struct SymbolHistoricalData {
         // Ensure the data is for the same symbol
         if (other.symbol != symbol) { throw std::runtime_error("Cannot append two SymbolHistoricalData's of different symbols!"); }
         data.insert(other.data.begin(), other.data.end()); }
+
+    // Returns a copy of the object with only the selected dates
+    SymbolHistoricalData trim(const BloombergLP::blpapi::Datetime& start, const BloombergLP::blpapi::Datetime& end) {
+        // Create a temporary holding package SHD
+        SymbolHistoricalData toReturn;
+        toReturn.symbol = symbol;
+        toReturn.data = {};
+        // Iterate through the current data, moving over data for dates between start and end
+        for (auto &iter : data) {
+            // If the date is valid, then add it to toReturn
+            if (date_funcs::is_greater(iter.first, start) && date_funcs::is_greater(end, iter.first)) {
+                toReturn.data[iter.first] = iter.second;
+            }
+        }
+        return toReturn;
+    }
 };
 
 // Class that contains the methods for data retrieval from Bloomberg API. In the future it will be
