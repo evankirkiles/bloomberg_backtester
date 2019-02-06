@@ -22,7 +22,7 @@ ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const
     // Perform constant declarations and definitions here.
     context["lookback"] = 126;                                // The lookback for the moving average
     context["maxleverage"] = 0.9;                             // The maximum leverage allowed
-    context["multiple"] = 5.0;                                // 1% of return translates to what weight? e.g. 5%
+    context["multiple"] = 2;                                  // 1% of return translates to what weight? e.g. 5%
     context["profittake"] = 1.96;                             // Take profits when breaks out of 95% Bollinger Band
     context["slopemin"] = 0.252;                              // Minimum slope on which to be trading on
     context["dailyvolatilitytarget"] = 0.025;                 // Target daily volatility, in percent
@@ -151,9 +151,13 @@ void ALGO_Momentum1::exitconditions() {
         std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> prices =
                 data->history(symbol_list, {"PX_LAST"}, 4, "DAILY");
         double price=0;
+        double n = 0;
         for (auto &iter : prices->at(symbol).data) {
+            n++;
             price += iter.second["PX_LAST"];
         }
+
+        price /= n;
 
         // Now calculate the stop loss percentage as the estimated return over the lookback
         double stoploss = std::abs(symbolspecifics[symbol]["weight"] * context["lookback"] / 252.0) + 1;
@@ -205,10 +209,11 @@ void ALGO_Momentum1::exitconditions() {
 // Note the volatility scalar which changes our positions based on how volatile the asset is.
 void ALGO_Momentum1::trade() {
     // First, calculate the volatility scalar
-    std::unordered_map<std::string, double> vol_mult = volatilityscalars();
+    // std::unordered_map<std::string, double> vol_mult = volatilityscalars();
     // Also keep track of how many securities we do not have a position in
     int nopositions = 0;
-    for (const std::string& sym : symbol_list) { if (symbolspecifics[sym]["weight"] != 0) { nopositions++; } }
+    for (const std::string& sym : symbol_list) { if (symbolspecifics[sym]["weight"] != 0 ||
+        (symbolspecifics[sym]["bought"] == 0 && symbolspecifics[sym]["weight"] == 0)) { nopositions++; } }
 
     // Now iterate through the weights and perform the trades
     for (const std::string& symbol : symbol_list) {
@@ -221,17 +226,25 @@ void ALGO_Momentum1::trade() {
             } else if (symbolspecifics[symbol]["weight"] > 0) {
                 double percent =
                         (std::fmin(symbolspecifics[symbol]["weight"] * context["multiple"], context["maxleverage"]) /
-                         nopositions) * vol_mult[symbol];
-                if (std::isnan(percent)) { percent = 0; }
-                message(std::string("^ Go long ") + std::to_string(percent) + "% in " + symbol);
+                         nopositions); // * vol_mult[symbol];
+                if (std::isnan(percent)) {
+                    percent = 0;
+                    std::cout << "NaN trade value, skipping." << std::endl;
+                    return;
+                }
+                message(std::string("^ Go long ") + std::to_string(percent*100) + "% in " + symbol);
                 order_target_percent(symbol, percent);
                 symbolspecifics[symbol]["bought"] = 1;
             } else if (symbolspecifics[symbol]["weight"] < 0) {
                 double percent =
                         (std::fmax(symbolspecifics[symbol]["weight"] * context["multiple"], -context["maxleverage"]) /
-                         nopositions) * vol_mult[symbol];
-                if (std::isnan(percent)) { percent = 0; }
-                message(std::string("v Go short ") + std::to_string(percent) + "% in " + symbol);
+                         nopositions); // * vol_mult[symbol];
+                if (std::isnan(percent)) {
+                    percent = 0;
+                    std::cout << "NaN trade value, skipping." << std::endl;
+                    return;
+                }
+                message(std::string("v Go short ") + std::to_string(percent*100) + "% in " + symbol);
                 order_target_percent(symbol, percent);
                 symbolspecifics[symbol]["bought"] = 1;
             }

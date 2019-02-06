@@ -19,17 +19,19 @@ ExecutionHandler::ExecutionHandler(std::queue<std::unique_ptr<events::Event>> *p
 
 // Takes a signal event and converts it into an Order Event. It first performs a MarketEvent to make sure the
 // portfolio holdings are as up-to-date as possible.
-double ExecutionHandler::process_signal(const events::SignalEvent &event) {
+void ExecutionHandler::process_signal(const events::SignalEvent &event) {
 
     // Before doing anything, recalculate portfolio holdings with a simulated MarketEvent
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> recentprice =
-            std::move(data_manager->history({event.symbol}, {"PX_LAST"}, 1, "RECENT"));
+            std::move(data_manager->history({event.symbol}, {"PX_LAST"}, 4, "RECENT"));
     auto data = recentprice->at(event.symbol).data.rbegin();
     portfolio->update_market(events::MarketEvent({event.symbol}, {{event.symbol, data->second["PX_LAST"]}}, data->first));
 
     // Determine what percentage of the portfolio must be filled based on the totalholdings, heldcash, and current holdings.
     double current_percent = portfolio->current_holdings[event.symbol] / portfolio->current_holdings[portfolio_fields::TOTAL_HOLDINGS];
     double percent_needed = event.percentage - current_percent;
+    // If there is no percent needed (reasonably small), then don't do anything
+    if (std::abs(percent_needed)<0.00001) { return; }
     // Convert the percent to a quantity of the stock, chopping off any decimals so that never go over the percent we
     // want, only up to (using floor when greater and ceil when less than 0)
     double cost = percent_needed * portfolio->current_holdings[portfolio_fields::TOTAL_HOLDINGS];
@@ -50,7 +52,7 @@ void ExecutionHandler::process_order(const events::OrderEvent &event) {
     // First, get the price of the stock (should be the most recent one as this event is run on the STACK after
     // the stock data has already been updated for the signal order).
     std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> recentprice =
-            std::move(data_manager->history({event.symbol}, {"PX_LAST"}, 1, "RECENT"));
+            std::move(data_manager->history({event.symbol}, {"PX_LAST"}, 4, "RECENT"));
     double price = recentprice->at(event.symbol).data.rbegin()->second["PX_LAST"];
 
     // Make sure the market can handle the order as well. Orders should not get filled if they exceed a

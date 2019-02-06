@@ -58,10 +58,11 @@ std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> Historica
         return std::move(dr.pullHistoricalData(symbols, beginDate, *currentTime, fields, freq));
     } else {
         // Temporary object to return
-        std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> toReturn = {};
+        std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> toReturn =
+                std::make_unique<std::unordered_map<std::string, SymbolHistoricalData>>();
         // Have to iterate through all the SymbolHistoricalData objects and trim copies of them to the requested dates and fields.
         for(const std::string& symb : symbols) {
-            toReturn->at(symb) = preloaded_data->at(symb).trim(beginDate, *currentTime);
+            (*toReturn)[symb] = preloaded_data->at(symb).trim(beginDate, *currentTime);
         }
         return std::move(toReturn);
     }

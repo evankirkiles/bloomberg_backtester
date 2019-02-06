@@ -26,7 +26,7 @@ public:
             std::shared_ptr<DataManager> data_manager, Portfolio* portfolio);
 
     // Takes in a Signal Event and converts it into an order based on the portfolio holdings, slippage, and commission
-    double process_signal(const events::SignalEvent& event);
+    void process_signal(const events::SignalEvent& event);
     // Takes in an Order Event and converts it into a FillEvent based on fill limits (may also split it into several orders)
     void process_order(const events::OrderEvent& event);
 
