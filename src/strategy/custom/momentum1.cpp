@@ -174,7 +174,7 @@ void ALGO_Momentum1::exitconditions() {
                 // Make sure the price is outside of the stop price anyways, if not then sell all shares
                 if (price < symbolspecifics[symbol]["stopprice"]) {
                     // Notify us of the exiting of the position
-                    message("x Long stop loss for " + symbol+ ", sell all shares.");
+                    log("x Long stop loss for " + symbol+ ", sell all shares.");
                     symbolspecifics[symbol]["weight"] = 0;
                     symbolspecifics[symbol]["bought"] = 0;
                     // We just use order percent here because we want to exit the trend immediately (not end of day)
@@ -192,7 +192,7 @@ void ALGO_Momentum1::exitconditions() {
                 // Make sure the price is outside of the stop price anyways, if not then sell all shares
                 if (price > symbolspecifics[symbol]["stopprice"]) {
                     // Notify us of the exiting of the position
-                    message("x Short stop loss for " + symbol+ ", sell all shares.");
+                    log("x Short stop loss for " + symbol+ ", sell all shares.");
                     symbolspecifics[symbol]["weight"] = 0;
                     symbolspecifics[symbol]["bought"] = 0;
                     // We just use order percent here because we want to exit the trend immediately (not end of day)
@@ -232,7 +232,7 @@ void ALGO_Momentum1::trade() {
                     std::cout << "NaN trade value, skipping." << std::endl;
                     return;
                 }
-                message(std::string("^ Go long ") + std::to_string(percent*100) + "% in " + symbol);
+                log(std::string("^ Go long ") + std::to_string(percent*100) + "% in " + symbol);
                 order_target_percent(symbol, percent);
                 symbolspecifics[symbol]["bought"] = 1;
             } else if (symbolspecifics[symbol]["weight"] < 0) {
@@ -244,7 +244,7 @@ void ALGO_Momentum1::trade() {
                     std::cout << "NaN trade value, skipping." << std::endl;
                     return;
                 }
-                message(std::string("v Go short ") + std::to_string(percent*100) + "% in " + symbol);
+                log(std::string("v Go short ") + std::to_string(percent*100) + "% in " + symbol);
                 order_target_percent(symbol, percent);
                 symbolspecifics[symbol]["bought"] = 1;
             }

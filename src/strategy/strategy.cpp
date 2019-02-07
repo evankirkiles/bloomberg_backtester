@@ -29,7 +29,7 @@ void BaseStrategy::order_target_percent(const std::string &symbol, double percen
 void BaseStrategy::log(const std::string &message) { std::cout << "[" << current_time << "] " << message << std::endl; }
 // Logs a message to Slack with the current time (to be done later)
 void BaseStrategy::message(const std::string &message) {
-    log(message);
+    system(std::string(R"(C:\python27\python.exe C:\Users\bloomberg\CLionProjects\bloomberg_backtester\src\python\slackmanagement.py -m=")").append(message + "\"").c_str());
 }
 
 // Builds the Strategy object with the given initial capital and start and end. To reformat the strategy,
@@ -107,7 +107,9 @@ void Strategy::run() {
     }
 
     // Print out performance
-    std::cout << "ALGO FINISHED. Total return: " << portfolio.current_holdings[portfolio_fields::EQUITY_CURVE] * 100 << '%' << std::endl;
+    std::string mess = std::string("Backtest finished. Total return: ") + std::to_string(portfolio.current_holdings[portfolio_fields::EQUITY_CURVE] * 100) + "%";
+    if (sendStatusMessage) { message(mess); }
+    std::cout << mess << std::endl;
 }
 
 // Schedules member functions by putting a ScheduledEvent with a reference to the member function and a reference
@@ -122,6 +124,9 @@ void Strategy::schedule_function(std::function<void(Strategy*)> func, const Date
         heap_eventlist.insert(toInsertBefore, std::make_unique<events::ScheduledEvent<Strategy>>(func, this, i));
     }
 }
+
+// Turns on Slack messaging at end of algo run
+void Strategy::turnOnSlackPerformanceReporting() { sendStatusMessage = true; }
 
 // Scheduled function check
 void Strategy::check() { std::cout << "Function ran on " << current_time << std::endl; }

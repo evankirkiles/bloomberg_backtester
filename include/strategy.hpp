@@ -82,6 +82,9 @@ public:
 
     void run() override;
 
+    // Turns on performance reporting
+    void turnOnSlackPerformanceReporting();
+
     // Functions to schedule
     void check();
 
@@ -94,6 +97,8 @@ public:
     friend class StrategyFixture_run_Test;
 
 protected:
+    // Tells whether to message status at end of run
+    bool sendStatusMessage = false;
     // The Data Manager
     std::shared_ptr<DataManager> data;
 private:
