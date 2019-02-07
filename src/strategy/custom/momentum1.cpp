@@ -188,7 +188,7 @@ void ALGO_Momentum1::exitconditions() {
                 // Otherwise, check the current price against the stop price
             } else {
                 // Only update the stop price if it has decreased so we are safer and do not have a high stop price.
-                symbolspecifics[symbol]["stopprice"] = std::min(price/stoploss, symbolspecifics[symbol]["stopprice"]);
+                symbolspecifics[symbol]["stopprice"] = std::min(price*stoploss, symbolspecifics[symbol]["stopprice"]);
                 // Make sure the price is outside of the stop price anyways, if not then sell all shares
                 if (price > symbolspecifics[symbol]["stopprice"]) {
                     // Notify us of the exiting of the position
