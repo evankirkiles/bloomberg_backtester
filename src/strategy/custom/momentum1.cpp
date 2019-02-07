@@ -8,7 +8,7 @@
 // Initialize the strategy to backtest
 ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const BloombergLP::blpapi::Datetime &end,
                      unsigned int capital) :
-        Strategy({"DIA US EQUITY", "QQQ US EQUITY", "LQD US EQUITY",
+        LiveStrategy({"DIA US EQUITY", "QQQ US EQUITY", "LQD US EQUITY",
                   "HYG US EQUITY", "USO US EQUITY", "GLD US EQUITY",
                   "VNQ US EQUITY", "RWX US EQUITY", "UNG US EQUITY",
                   "DBA US EQUITY"},
@@ -40,22 +40,22 @@ ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const
 
     // Every 5 minutes during market hours
     // 1. Checks for any exit conditions in securities where weight != 0
-    schedule_function([](Strategy* x)->void { auto a = dynamic_cast<ALGO_Momentum1*>(x); if (a) a->exitconditions(); },
+    schedule_function([](LiveStrategy* x)->void { auto a = dynamic_cast<ALGO_Momentum1*>(x); if (a) a->exitconditions(); },
                       date_rules.every_day(), TimeRules::market_open(0, 10));
 
     // 28 minutes after market opens
     // 2. Performs the regression and calculates the weights for any new trends
-    schedule_function([](Strategy* x)->void { auto b = dynamic_cast<ALGO_Momentum1*>(x); if (b) b->regression(); },
+    schedule_function([](LiveStrategy* x)->void { auto b = dynamic_cast<ALGO_Momentum1*>(x); if (b) b->regression(); },
                       date_rules.every_day(), TimeRules::market_open(0, 28));
 
     // 30 minutes after market opens
     // 3. Performs trades and notifies us of any required buys/sells
-    schedule_function([](Strategy* x)->void { auto c = dynamic_cast<ALGO_Momentum1*>(x); if (c) c->trade(); },
+    schedule_function([](LiveStrategy* x)->void { auto c = dynamic_cast<ALGO_Momentum1*>(x); if (c) c->trade(); },
                       date_rules.every_day(), TimeRules::market_open(0, 30));
 
     // At close of every day
     // 4. Reports performance of portfolio
-    schedule_function([](Strategy* x)->void { auto d = dynamic_cast<ALGO_Momentum1*>(x); if (d) d->reportperformance(); },
+    schedule_function([](LiveStrategy* x)->void { auto d = dynamic_cast<ALGO_Momentum1*>(x); if (d) d->reportperformance(); },
                       date_rules.every_day(), TimeRules::market_close(0, 0));
 }
 
@@ -228,7 +228,6 @@ void ALGO_Momentum1::trade() {
                         (std::fmin(symbolspecifics[symbol]["weight"] * context["multiple"], context["maxleverage"]) /
                          nopositions); // * vol_mult[symbol];
                 if (std::isnan(percent)) {
-                    percent = 0;
                     std::cout << "NaN trade value, skipping." << std::endl;
                     return;
                 }
@@ -240,7 +239,6 @@ void ALGO_Momentum1::trade() {
                         (std::fmax(symbolspecifics[symbol]["weight"] * context["multiple"], -context["maxleverage"]) /
                          nopositions); // * vol_mult[symbol];
                 if (std::isnan(percent)) {
-                    percent = 0;
                     std::cout << "NaN trade value, skipping." << std::endl;
                     return;
                 }

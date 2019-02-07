@@ -46,13 +46,15 @@ public:
     // Runs the strategy itself, should be called on a new thread
     virtual void run()=0;
 
+    // Sends a message to Slack
+    void message(const std::string& message);
+
     // Instances of the daterules for scheduling functions
     const DateRules date_rules;
     const TimeRules time_rules;
 protected:
     // Functions for logging and messaging (one goes to console, other goes to Slack)
     void log(const std::string& message);
-    void message(const std::string& message);
 
     const unsigned int initial_capital;
     BloombergLP::blpapi::Datetime start_date, end_date, current_time;
