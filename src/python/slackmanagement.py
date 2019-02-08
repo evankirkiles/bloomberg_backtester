@@ -1,7 +1,7 @@
 import argparse, json
 from slackclient import SlackClient
 
-with open('C:\\Users\\bloomberg\\CLionProjects\\bloomberg_backtester\\src\\configuration.json') as f:
+with open('C:\\Users\\bloomberg\\CLionProjects\\bloomberg_backtester\\src\\private\\configuration.json') as f:
     data = json.load(f)
 
 parser = argparse.ArgumentParser()
