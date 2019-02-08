@@ -1,14 +1,17 @@
-import argparse
+import argparse, json
 from slackclient import SlackClient
+
+with open('C:\\Users\\bloomberg\\CLionProjects\\bloomberg_backtester\\src\\configuration.json') as f:
+    data = json.load(f)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-m', '--message', action='store', dest='message', help='Message to send through Slack.')
 args = parser.parse_args()
 
-sc = SlackClient("xoxb-443669380613-546466058231-H5dd72QUWOhuPEiWIFgNfmeB")
+sc = SlackClient(data['slackKey'])
 
 sc.api_call(
     "chat.postMessage",
-    channel="general",
+    channel="terminal",
     text=args.message
 )
