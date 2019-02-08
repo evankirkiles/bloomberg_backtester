@@ -1,5 +1,4 @@
 # Ignore the .idea and cmake-build-debug directories
-src/private/
 .idea/
 cmake-build-debug/
 lib/googletest/
