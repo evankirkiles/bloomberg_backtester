@@ -38,9 +38,10 @@ public:
 
     // Initializes the base strategy params
     BaseStrategy(std::vector<std::string> symbol_list,
-                unsigned int initial_capital,
-                const BloombergLP::blpapi::Datetime& start,
-                const BloombergLP::blpapi::Datetime& end);
+                 unsigned int initial_capital,
+                 const BloombergLP::blpapi::Datetime& start,
+                 const BloombergLP::blpapi::Datetime& end,
+                 const std::string& saveFileLocation="");
 
     // Function to order a target percentage of stocks
     void order_target_percent(const std::string& symbol, double percent);
@@ -53,8 +54,9 @@ public:
 
     // Sends a message to Slack
     void message(const std::string& message);
-    // Saves the current context, symbolspecifics, and portfolio data
+    // Saves and loads the current context, symbolspecifics, and portfolio data
     void save_state(const std::string& filepath);
+    void load_state(const std::string& filepath);
 
     // Instances of the daterules for scheduling functions
     const DateRules date_rules;
@@ -67,12 +69,16 @@ protected:
     BloombergLP::blpapi::Datetime start_date, end_date, current_time;
 
     // Basic map of variables which one would like to maintain between function calls
-    std::map<std::string, double> context;
+    std::unordered_map<std::string, double> context;
     // Symbol-specific variables, such as weights, stop prices, etc.
     std::unordered_map<std::string, std::unordered_map<std::string, double>> symbolspecifics;
 
     // Run function members, for breaking loop and keeping track of current Event position
     bool running = false;
+    // Tells whether to message status at end of run
+    bool sendStatusMessage = false;
+    // Should it use the save? If yes, this string is the file path. If no, this string is empty
+    std::string saveFileLocation;
 
     // STACK event queue, who must be empty for the HEAP event list to continue to run
     std::queue<std::unique_ptr<events::Event>> stack_eventqueue;
@@ -89,6 +95,7 @@ public:
             unsigned int initial_capital,
             const BloombergLP::blpapi::Datetime& start_date,
             const BloombergLP::blpapi::Datetime& end_date,
+             const std::string& p_saveFileLocation = "",
              const std::string& backtest_type = "HISTORICAL");
 
     void run() override;
@@ -108,8 +115,6 @@ public:
     friend class StrategyFixture_run_Test;
 
 protected:
-    // Tells whether to message status at end of run
-    bool sendStatusMessage = false;
     // The Data Manager
     std::shared_ptr<DataManager> data;
 private:
@@ -126,7 +131,8 @@ public:
     LiveStrategy(const std::vector<std::string>& symbol_list,
                  unsigned int initial_capital,
                  const BloombergLP::blpapi::Datetime& start_date,
-                 const BloombergLP::blpapi::Datetime& end_date);
+                 const BloombergLP::blpapi::Datetime& end_date,
+                 const std::string& p_saveFileLocation = "");
 
     // This function runs on a separate thread from the data receiver, allowing the user to use subscription
     // data from Bloomberg with a mutex to append to the heap from one thread and read from it (and pop front)

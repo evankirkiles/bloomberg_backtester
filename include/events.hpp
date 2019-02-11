@@ -117,6 +117,20 @@ struct FillEvent : public Event {
             const BloombergLP::blpapi::Datetime& when);
 };
 
+// StopEvent which terminates the execution loop safely. Put on the stack so it breaks the while loop that interprets
+// events, and allows the program to do any cleanup and post-run logging.
+//
+// @member reason              Why is the loop being stopped?
+//
+struct StopEvent : public Event {
+    const std::string reason;
+
+    // Print function
+    void what() override;
+
+    // Constructor for the StopEvent
+    StopEvent(const std::string& reason, const BloombergLP::blpapi::Datetime& when);
+};
 }
 
 #endif //BACKTESTER_EVENTS_HPP

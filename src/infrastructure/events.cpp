@@ -66,4 +66,14 @@ void FillEvent::what() {
               << "\nCost: " << cost << "\nSlippage: " << slippage << "\nCommission: " << commission << "\n";
 }
 
+// Stop Event initializer list
+StopEvent::StopEvent(const std::string &p_reason, const BloombergLP::blpapi::Datetime& when) :
+    Event("STOP", when),
+    reason(p_reason) {}
+
+// Print function for the StopEvent
+void StopEvent::what() {
+    std::cout << "Execution stopped on " << datetime << " for reason: " << reason << "\n";
+}
+
 }

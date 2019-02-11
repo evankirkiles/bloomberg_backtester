@@ -16,7 +16,7 @@
 #include <deque>
 
 // LOGIC: A simple strategy which buys 10% in SPY, AAPL, and CAT on the first day and then holds for duration.
-class ALGO_Momentum1 : public LiveStrategy {
+class ALGO_Momentum1 : public Strategy {
 public:
     // Constructor initializes Strategy parent
     ALGO_Momentum1(const BloombergLP::blpapi::Datetime& start, const BloombergLP::blpapi::Datetime& end, unsigned int capital);

@@ -9,7 +9,8 @@
 
 // Builds the parent abstract class
 BaseStrategy::BaseStrategy(std::vector<std::string> p_symbol_list, unsigned int p_initial_capital,
-                           const BloombergLP::blpapi::Datetime &p_start, const BloombergLP::blpapi::Datetime &p_end) :
+                           const BloombergLP::blpapi::Datetime &p_start, const BloombergLP::blpapi::Datetime &p_end,
+                           const std::string& p_saveFileLocation) :
             symbol_list(std::move(p_symbol_list)),
             initial_capital(p_initial_capital),
             start_date(p_start),
@@ -17,6 +18,7 @@ BaseStrategy::BaseStrategy(std::vector<std::string> p_symbol_list, unsigned int 
             end_date(p_end),
             date_rules(p_start, p_end),
             time_rules(),
+            saveFileLocation(p_saveFileLocation),
             portfolio(symbol_list, p_initial_capital, p_start) {
 }
 
@@ -36,7 +38,35 @@ void BaseStrategy::save_state(const std::string &filepath) {
     // 2: context map
     // 3: symbolspecifics map
     nlohmann::json currentholds(portfolio.current_holdings);
-    file << currentholds << "\n";
+    nlohmann::json currentpos(portfolio.current_positions);
+    nlohmann::json contexts(context);
+    nlohmann::json symbolspecs(symbolspecifics);
+    file << currentholds << "\n" << currentpos << "\n" << contexts << "\n"  << symbolspecs;
+}
+
+// Loads the state of the strategy from a text file
+void BaseStrategy::load_state(const std::string &filepath) {
+    // Open the file
+    std::ifstream file;
+    file.open(filepath, std::ios_base::in);
+    // Read in line by line, with the same file structure as stated above
+    std::string currentline;
+    std::getline(file, currentline);
+    nlohmann::json tempjs = nlohmann::json::parse(currentline);
+    std::unordered_map<std::string, double> m2 = tempjs;
+    portfolio.current_holdings = m2;
+    std::getline(file, currentline);
+    tempjs = nlohmann::json::parse(currentline);
+    std::unordered_map<std::string, int> m3 = tempjs;
+    portfolio.current_positions = m3;
+    std::getline(file, currentline);
+    tempjs = nlohmann::json::parse(currentline);
+    std::unordered_map<std::string, double> m4 = tempjs;
+    context = m4;
+    std::getline(file, currentline);
+    tempjs = nlohmann::json::parse(currentline);
+    std::unordered_map<std::string, std::unordered_map<std::string, double>> m5 = tempjs;
+    symbolspecifics = m5;
 }
 
 // Logs a message to the console with the current time
@@ -52,8 +82,9 @@ Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
                    unsigned int p_initial_capital,
                    const BloombergLP::blpapi::Datetime &p_start_date,
                    const BloombergLP::blpapi::Datetime &p_end_date,
+                   const std::string& p_saveFileLocation,
                    const std::string& p_backtest_type) :
-           BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
+           BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date, p_saveFileLocation),
            backtest_type(p_backtest_type),
            data(std::make_shared<HistoricalDataManager>(&current_time,
                    // Ternary used for setting the correlation ID
@@ -72,6 +103,8 @@ Strategy::Strategy(const std::vector<std::string>& p_symbol_list,
 
 // Runs the strategy by iterating through the HEAP event list until it is empty
 void Strategy::run() {
+    // Load in data from the save state if necessary
+    if (!saveFileLocation.empty()) { load_state(saveFileLocation); }
     // Place the iterator onto the heap eventlist
     running = true;
 
@@ -117,12 +150,16 @@ void Strategy::run() {
             events::ScheduledEvent<Strategy> event_scheduled = *dynamic_cast<events::ScheduledEvent<Strategy>*>(event.release());
             // Run the function referenced to in the schedule event
             event_scheduled.run();
+        } else if (event->type == "STOP") {
+            event->what();
+            running = false;
         }
     }
 
     // Print out performance
     std::string mess = std::string("Backtest finished. Total return: ") + std::to_string(portfolio.current_holdings[portfolio_fields::EQUITY_CURVE] * 100) + "%";
     if (sendStatusMessage) { message(mess); }
+    if (!saveFileLocation.empty()) { save_state(saveFileLocation); }
     std::cout << mess << std::endl;
 }
 
@@ -150,8 +187,9 @@ void Strategy::check() { std::cout << "Function ran on " << current_time << std:
 LiveStrategy::LiveStrategy(const std::vector<std::string> &p_symbol_list,
                            unsigned int p_initial_capital,
                            const BloombergLP::blpapi::Datetime &p_start_date,
-                           const BloombergLP::blpapi::Datetime &p_end_date) :
-        BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date),
+                           const BloombergLP::blpapi::Datetime &p_end_date,
+                           const std::string& p_saveFileLocation) :
+        BaseStrategy(p_symbol_list, p_initial_capital, p_start_date, p_end_date, p_saveFileLocation),
         mtx(PTHREAD_MUTEX_INITIALIZER),
         data(std::make_shared<HistoricalDataManager>(&current_time)),
         execution_handler(&stack_eventqueue, &heap_eventlist, data, &portfolio),
@@ -167,11 +205,14 @@ void LiveStrategy::run() {
 
     // Sets the start date and current time to the current DateTime
     BloombergLP::blpapi::Datetime initial = date_funcs::get_now();
+    running = true;
     start_date = initial;
     portfolio.reset_portfolio(initial_capital, initial);
+    // Load in data from the save state if necessary
+    if (!saveFileLocation.empty()) { load_state(saveFileLocation); }
 
     // The datetime incrementing loop which continuously updates the current time
-    for (current_time = initial; date_funcs::is_greater(end_date, current_time); current_time = date_funcs::get_now()) {
+    for (current_time = initial; running && date_funcs::is_greater(end_date, current_time); current_time = date_funcs::get_now()) {
 
         // When there are new market events, put them into the heap
         if (!live_data->buffer_queue.empty()) {
@@ -241,8 +282,17 @@ void LiveStrategy::run() {
             events::ScheduledEvent<LiveStrategy> event_scheduled = *dynamic_cast<events::ScheduledEvent<LiveStrategy>*>(event.release());
             // Run the function referenced to in the schedule event
             event_scheduled.run();
+        }  else if (event->type == "STOP") {
+            event->what();
+            running = false;
         }
     }
+
+    // Print out performance
+    std::string mess = std::string("Backtest finished. Total return: ") + std::to_string(portfolio.current_holdings[portfolio_fields::EQUITY_CURVE] * 100) + "%";
+    if (sendStatusMessage) { message(mess); }
+    if (!saveFileLocation.empty()) { load_state(saveFileLocation); }
+    std::cout << mess << std::endl;
 }
 
 // Schedules a function in a LiveStrategy event loop. Is the exact same function as the normal Strategy's.
