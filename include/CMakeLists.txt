@@ -14,7 +14,8 @@ set(BACKTEST_HEADERS
         execution.hpp
         slippage.hpp
         transactioncosts.hpp
-        benchmark.hpp)
+        benchmark.hpp
+        nlohmann/json.hpp)
 set(BACKTEST_SRCS
         ../src/data/dataretriever.cpp
         ../src/constants.cpp

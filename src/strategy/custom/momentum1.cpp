@@ -269,42 +269,6 @@ std::pair<double, double> ALGO_Momentum1::calcreg(std::vector<double> x) {
     return std::make_pair(slope, intercept);
 }
 
-// Calculates the volatility scalar for each stock, based on the standard deviation of the log returns.
-std::unordered_map<std::string, double> ALGO_Momentum1::volatilityscalars() {
-    // First, retrieve all the prices over the lookback
-    std::unique_ptr<std::unordered_map<std::string, SymbolHistoricalData>> prices =
-            data->history(symbol_list, {"PX_OPEN"}, (unsigned int) std::ceil(context["lookback"] * 1.6), "DAILY");
-
-    // The map to return with each symbol's volatility scalar
-    std::unordered_map<std::string, double> vol_mult;
-    // Iterate through each symbol to perform logic for each
-    for (const std::string &symbol : symbol_list) {
-        // First build vectors for each symbol
-        std::vector<double> x;
-        auto iter = prices->at(symbol).data.begin();
-        double previous = 0;
-        for (std::advance(iter, (prices->at(symbol).data.size() - (int) context["lookback"]));
-             iter != prices->at(symbol).data.end(); iter++) {
-            double val = (*iter).second["PX_OPEN"];
-            if (previous != 0) { x.emplace_back(std::log(val) - previous); }
-            previous = std::log(val);
-        }
-
-        // Now find the exponentially weighted moving standard deviation of the last month of log differences in x
-        double alpha = 2.0 / (21 + 1);
-        std::vector<double> ema = x;
-        std::vector<double> ewmstd = {0};
-        // Then we can calculate the ewmst recursively
-        for (int i = 1; i < ema.size(); i++) {
-            ema[i] = x[i] + (1 - alpha) * ema[i - 1];
-            ewmstd.emplace_back((1 - alpha) * (ema[i - 1] + alpha * pow(x[i] - ema[i - 1], 2)));
-        }
-        // Finally, return the last value of the ewmstd
-        vol_mult[symbol] = context["dailyvolatilitytarget"] / sqrt(ewmstd[ewmstd.size() - 1]);
-    }
-    return vol_mult;
-}
-
 // Reports the performance of the algorithm at end of every day.
 void ALGO_Momentum1::reportperformance() {
     // Log the portfolio status

@@ -25,6 +25,20 @@ void BaseStrategy::order_target_percent(const std::string &symbol, double percen
     stack_eventqueue.emplace(std::make_unique<events::SignalEvent>(symbol, percent, current_time));
 }
 
+// Saves the state of the strategy to the text file specified in JSON format
+void BaseStrategy::save_state(const std::string &filepath) {
+    // Open the file, truncating first
+    std::ofstream file;
+    file.open(filepath, std::ios_base::out | std::ios_base::trunc);
+    // Each row represents a different set of variables
+    // 0: portfolio current holdings
+    // 1: portfolio current positions
+    // 2: context map
+    // 3: symbolspecifics map
+    nlohmann::json currentholds(portfolio.current_holdings);
+    file << currentholds << "\n";
+}
+
 // Logs a message to the console with the current time
 void BaseStrategy::log(const std::string &message) { std::cout << "[" << current_time << "] " << message << std::endl; }
 // Logs a message to Slack with the current time (to be done later)

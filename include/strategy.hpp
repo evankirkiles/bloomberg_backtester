@@ -9,6 +9,11 @@
 // STL includes
 #include <chrono>
 #include <ctime>
+// IO includes
+#include <iostream>
+#include <fstream>
+// Include nlohmann_json
+#include <nlohmann/json.hpp>
 // Custom class includes
 #include "events.hpp"
 #include "dataretriever.hpp"
@@ -48,6 +53,8 @@ public:
 
     // Sends a message to Slack
     void message(const std::string& message);
+    // Saves the current context, symbolspecifics, and portfolio data
+    void save_state(const std::string& filepath);
 
     // Instances of the daterules for scheduling functions
     const DateRules date_rules;
@@ -61,6 +68,8 @@ protected:
 
     // Basic map of variables which one would like to maintain between function calls
     std::map<std::string, double> context;
+    // Symbol-specific variables, such as weights, stop prices, etc.
+    std::unordered_map<std::string, std::unordered_map<std::string, double>> symbolspecifics;
 
     // Run function members, for breaking loop and keeping track of current Event position
     bool running = false;
