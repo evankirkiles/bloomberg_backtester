@@ -22,6 +22,11 @@ ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const
     dynamic_cast<HistoricalDataManager*>(data.get())->preload(symbol_list, {"PX_OPEN", "PX_LAST"}, start, end, 127);
     log("Backtest data pull complete.");
 
+    // Prepare performance csv
+    std::ofstream output;
+    output.open(R"(C:\Users\bloomberg\CLionProjects\bloomberg_backtester\saves\performance.csv)", std::ios_base::trunc | std::ios_base::out);
+    output.close();
+
     // Perform constant declarations and definitions here.
     context["lookback"] = 126;                                // The lookback for the moving average
     context["maxleverage"] = 0.9;                             // The maximum leverage allowed
@@ -41,10 +46,10 @@ ALGO_Momentum1::ALGO_Momentum1(const BloombergLP::blpapi::Datetime &start, const
     // This lambda is annoying but necessary for downcasting the Strategy to the type of your algorithm when
     // it is known, otherwise cannot have schedule_function declared in Strategy base class.
 
-    // Every 5 minutes during market hours
+    // Every 11 minutes during market hours
     // 1. Checks for any exit conditions in securities where weight != 0
     schedule_function([](Strategy* x)->void { auto a = dynamic_cast<ALGO_Momentum1*>(x); if (a) a->exitconditions(); },
-                      date_rules.every_day(), TimeRules::market_open(0, 10));
+                      date_rules.every_day(), TimeRules::every_minute(10));
 
     // 28 minutes after market opens
     // 2. Performs the regression and calculates the weights for any new trends
@@ -278,4 +283,10 @@ void ALGO_Momentum1::reportperformance() {
     log(std::string("Return: ") + std::to_string(portfolio.current_holdings[portfolio_fields::EQUITY_CURVE]) +
         std::string(", Value: ") + std::to_string(portfolio.current_holdings[portfolio_fields::TOTAL_HOLDINGS]) +
         std::string(", Held Cash: ") + std::to_string(portfolio.current_holdings[portfolio_fields::HELD_CASH]));
+
+    // Build a .csv with the returns for plotting in Python
+    std::ofstream output;
+    output.open(R"(C:\Users\bloomberg\CLionProjects\bloomberg_backtester\saves\performance.csv)", std::ios_base::app | std::ios_base::out);
+    output << portfolio.current_holdings[portfolio_fields::EQUITY_CURVE] << "\n";
+    output.close();
 }
